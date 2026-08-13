@@ -30,10 +30,6 @@ public class PlayerMovement : MonoBehaviour
 
         Vector2 target = current + (Move * speed *Time.fixedDeltaTime);
 
-        target.x = Mathf.Clamp(target.x, mapData.minBounds.x, mapData.maxBounds.x);
-
-        target.y = Mathf.Clamp(target.y, mapData.minBounds.y, mapData.maxBounds.y);
-
         rigidBody.MovePosition(target);
     }
 }
