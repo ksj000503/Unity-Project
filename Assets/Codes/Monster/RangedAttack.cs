@@ -15,6 +15,9 @@ public class RangedAttack : MonoBehaviour, IMonsterAttack
 
     private float cooldownTimer;
 
+    [SerializeField] 
+    private GameObject projectilePrefab;
+
     void Start()
     {
         GameObject player = GameObject.FindGameObjectWithTag("Player");
@@ -34,14 +37,44 @@ public class RangedAttack : MonoBehaviour, IMonsterAttack
         {
             return;
         }
+
         float sqrDistance = ((Vector2)player.position - (Vector2)transform.position).sqrMagnitude;
 
-        if(sqrDistance > attackRange * attackRange)
+        if (sqrDistance > attackRange * attackRange)
         {
             return;
         }
 
+        FireProjectile(player.position);
+
         cooldownTimer = attackCooldown;
+    }
+
+    private void FireProjectile(Vector2 targetPos)
+    {
+        if (projectilePrefab == null)
+        {
+            Debug.LogWarning("[RangedAttack] projectilePrefab이 비어있습니다.");
+
+            return;
+        }
+
+        GameObject projGO = ObjectPoolManager.Instance.Get(projectilePrefab);
+
+        projGO.transform.position = transform.position;
+
+        Vector2 direction = (targetPos - (Vector2)transform.position).normalized;
+
+        Projectile projectile = projGO.GetComponent<Projectile>();
+
+        if (projectile == null)
+        {
+            Debug.LogError("[RangedAttack] projectilePrefab에 Projectile 컴포넌트가 없습니다.");
+
+            return;
+        }
+
+        projectile.Launch(direction, damage, projectilePrefab);
     }
 
     void Update()
