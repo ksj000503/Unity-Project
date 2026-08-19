@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 919fbdf6fe30b9f4da0f6cf894270c41, type: 3}
+  m_Name: WeaponData
+  m_EditorClassIdentifier: Assembly-CSharp::WeaponData
+  weaponName: New Weapon
+  icon: {fileID: 0}
+  weaponPrefab: {fileID: 4017335338842709144, guid: 85ad6ccd183013a40955f5dc3c49fa79, type: 3}
+  damage: 10
+  attackCooldown: 1
+  detectRange: 1.5
+  spinDuration: 0.3
+  spinRadius: 1

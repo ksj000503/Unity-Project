@@ -15,7 +15,7 @@ GameObject:
   - component: {fileID: 2000889006695700568}
   - component: {fileID: 4977421798308917004}
   - component: {fileID: 3902730669861011544}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Monster_Melee
   m_TagString: Untagged
   m_Icon: {fileID: 0}

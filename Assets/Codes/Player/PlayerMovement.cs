@@ -14,6 +14,16 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField]
     private MapData mapData;
 
+    // 임시
+    [SerializeField]
+    private WeaponData myWeaponData;
+
+    // 임시
+    private void Start()
+    {
+        GetComponent<WeaponSlotManager>().AddWeapon(myWeaponData);
+    }
+
     private void Awake()
     {
         rigidBody = GetComponent<Rigidbody2D>();        
