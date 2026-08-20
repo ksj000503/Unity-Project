@@ -15,8 +15,11 @@ MonoBehaviour:
   weaponName: New Weapon
   icon: {fileID: 0}
   weaponPrefab: {fileID: 4017335338842709144, guid: 85ad6ccd183013a40955f5dc3c49fa79, type: 3}
+  weaponType: 0
   damage: 10
   attackCooldown: 1
   detectRange: 1.5
   spinDuration: 0.3
   spinRadius: 1
+  projectilePrefab: {fileID: 0}
+  pierceCount: 0

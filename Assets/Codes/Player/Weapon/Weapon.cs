@@ -43,9 +43,16 @@ public class Weapon : MonoBehaviour
             return;
         }
 
-  
-        behavior = new MeleeSpinBehavior();
 
+        switch (data.weaponType)
+        {
+            case WeaponType.RangedShoot:
+                behavior = new RangedShootBehavior();
+                break;
+            default:
+                behavior = new MeleeSpinBehavior();
+                break;
+        }
         behavior.Initialize(this, data);
     }
 
