@@ -1,4 +1,3 @@
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -14,19 +13,9 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField]
     private MapData mapData;
 
-    // 임시
-    [SerializeField]
-    private WeaponData myWeaponData;
-
-    // 임시
-    private void Start()
-    {
-        GetComponent<WeaponSlotManager>().AddWeapon(myWeaponData);
-    }
-
     private void Awake()
     {
-        rigidBody = GetComponent<Rigidbody2D>();        
+        rigidBody = GetComponent<Rigidbody2D>();
     }
 
     public void OnMove(InputValue value)
@@ -38,7 +27,7 @@ public class PlayerMovement : MonoBehaviour
     {
         Vector2 current = rigidBody.position;
 
-        Vector2 target = current + (Move * speed *Time.fixedDeltaTime);
+        Vector2 target = current + (Move * speed * Time.fixedDeltaTime);
 
         rigidBody.MovePosition(target);
     }

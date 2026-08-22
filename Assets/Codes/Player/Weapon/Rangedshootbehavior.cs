@@ -27,7 +27,7 @@ public class RangedShootBehavior : IWeaponBehavior
 
         if (data.projectilePrefab == null)
         {
-            Debug.LogError($"[RangedShootBehavior] {data.name}: projectilePrefab ¹ÌÇÒ´ç.");
+            Debug.LogError($"[RangedShootBehavior] {data.name}: projectilePrefab ë¯¸í• ë‹¹.");
 
             yield break;
         }
@@ -42,11 +42,11 @@ public class RangedShootBehavior : IWeaponBehavior
 
         if (projectile == null)
         {
-            Debug.LogError($"[RangedShootBehavior] {data.name}.projectilePrefab ¿¡ Projectile ÄÄÆ÷³ÍÆ® ¾øÀ½.");
+            Debug.LogError($"[RangedShootBehavior] {data.name}.projectilePrefab ì— Projectile ì»´í¬ë„ŒíŠ¸ ì—†ìŒ.");
 
             yield break;
         }
 
-        projectile.Launch(dir, data.damage, data.projectilePrefab, owner.EnemyMask, data.pierceCount);
+        projectile.Launch(dir, owner.Damage, data.projectilePrefab, owner.EnemyMask, owner.PierceCount);
     }
 }

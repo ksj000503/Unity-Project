@@ -1,16 +1,16 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 public class WeaponSlotManager : MonoBehaviour
 {
     [Header("슬롯 배치")]
-    [SerializeField] 
+    [SerializeField]
     private int slotCount = 6;
 
-    [SerializeField] 
+    [SerializeField]
     private float slotRadius = 0.8f;
 
     [Header("공격 대상 레이어")]
-    [SerializeField] 
+    [SerializeField]
     private LayerMask enemyMask;
 
     private Transform[] anchors;
@@ -41,6 +41,9 @@ public class WeaponSlotManager : MonoBehaviour
         }
     }
 
+    // 무기 획득 진입점.
+    // 같은 무기(동일 WeaponData 참조)를 이미 장착 중이면 슬롯을 늘리지 않고 레벨업.
+    // 아니면 1번 슬롯부터 차례로 빈 칸에 장착. 반환값 true = 장착 또는 레벨업 성공.
     public bool AddWeapon(WeaponData data)
     {
         if (data == null)
@@ -54,6 +57,16 @@ public class WeaponSlotManager : MonoBehaviour
             Debug.LogError($"[WeaponSlotManager] {data.name}: weaponPrefab 미할당.", this);
 
             return false;
+        }
+
+        // 중복 장비 → 레벨업 (슬롯이 가득 차 있어도 강화는 가능)
+        Weapon existing = FindSlotWithData(data);
+
+        if (existing != null)
+        {
+            existing.LevelUp();
+
+            return true;
         }
 
         int idx = FirstEmptySlot();
@@ -85,13 +98,24 @@ public class WeaponSlotManager : MonoBehaviour
         return true;
     }
 
+    // 동일 WeaponData 를 장착 중인 슬롯의 Weapon 반환(없으면 null).
+    private Weapon FindSlotWithData(WeaponData data)
+    {
+        for (int i = 0; i < slots.Length; i++)
+        {
+            if (slots[i] != null && slots[i].Data == data) return slots[i];
+        }
+
+        return null;
+    }
+
     private int FirstEmptySlot()
     {
         for (int i = 0; i < slots.Length; i++)
         {
             if (slots[i] == null) return i;
         }
-            
+
         return -1;
     }
 }

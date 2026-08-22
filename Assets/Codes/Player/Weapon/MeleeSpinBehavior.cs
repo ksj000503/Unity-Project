@@ -51,13 +51,13 @@ public class MeleeSpinBehavior : IWeaponBehavior
 
                 var dmg = h.GetComponent<IDamageable>();
 
-                if (dmg == null) continue; 
+                if (dmg == null) continue;
 
                 if (hitThisSpin.Contains(dmg)) continue;
 
                 hitThisSpin.Add(dmg);
 
-                dmg.TakeDamage(data.damage);
+                dmg.TakeDamage(owner.Damage);
             }
 
             yield return null;
