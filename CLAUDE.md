@@ -51,3 +51,27 @@
 | 네트워크 | 로컬, 무관 | PASS |
 | 필수값 누락/오형식 | Health 없으면 경고+바 비활성 / `maxHp ≤ 0` 나눗셈 가드(0 표시) / 비율 `Clamp01` | PASS |
 | 비정상/권한 없는 접근 | 풀 복귀·재사용 시 `OnDisable` 해제·`OnEnable` 재구독으로 상태 꼬임 방지 / 사망 중복 피격 무시(기존) | PASS |
+
+## 돈 드랍 & 자석 획득 & 재화 저장 (2026-08-24)
+
+코드 위치: `Assets/Codes/Currency/`. `Health`(Common)에 `OnDied` 이벤트 추가.
+
+- **사망 훅**: `Health.OnDied` 이벤트(`Die()`에서 풀 복귀/파괴 직전 1회 발행). Player도 Health를 쓰지만 `CoinDropper`가 없어 드랍 안 함.
+- **드랍**: `CoinDropper`(몬스터 부착, `[RequireComponent(Health)]`). `OnDied` 구독 → 사망 자리에 코인 스폰(`ObjectPoolManager` 풀링). **코인 가치 = `baseCoinValue × 현재 스테이지`**.
+- **스테이지 값**: `StageManager` 싱글톤(`CurrentStage`, 기본 1). 씬에 없으면 코인 값은 스테이지 1로 계산. 이후 웨이브/스테이지 로직이 `SetStage`로 갱신하면 코인 값 자동 스케일.
+- **자석 획득(Coin)**: `attractRange` 안이면 플레이어로 끌려가고(`FixedUpdate` 이동), `collectRange` 안이면 획득 → `CurrencyWallet.Add(value)` → 풀 복귀. 플레이어는 `"Player"` 태그로 탐색.
+- **저장(CurrencyWallet)**: 플레이어 부착, 인메모리 골드 + `OnChanged` 이벤트(추후 재화 UI). `TrySpend`도 제공(상점 대비).
+
+### 에디터 배선 (돈 시스템)
+1. **Coin_Basic 프리팹 신규**: SpriteRenderer + `Coin` 컴포넌트. (콜라이더/리지드바디 불필요 — 거리 기반). 첫 스폰 시 풀 자동 등록.
+2. **Monster_Melee 프리팹**: `CoinDropper` 추가 → `coinPrefab`에 Coin_Basic 할당, `baseCoinValue`/`dropCount` 설정.
+3. **Player**: `CurrencyWallet` 컴포넌트 추가. `"Player"` 태그 확인.
+4. (선택) 씬에 `StageManager` 오브젝트 배치 → 스테이지 진행 시 코인 값 스케일.
+
+### 예외 처리 검증 체크리스트 (돈 시스템)
+
+| 상황 | 대응 | 반영 |
+|------|------|------|
+| 네트워크 | 로컬, 무관 | PASS |
+| 필수값 누락/오형식 | `coinPrefab` 미할당 드랍 스킵+경고 / Coin 컴포넌트 없으면 즉시 풀 반납 / 플레이어 Wallet 없으면 획득 무시+경고 / 값·스테이지 `Mathf.Max` 하한 | PASS |
+| 비정상/권한 없는 접근 | 코인 중복 획득 `isCollected` 가드 / 풀 재사용 `OnEnable` 리셋 / `OnDied` 1회 발행 / `"Player"` 태그만 픽업 대상 | PASS |

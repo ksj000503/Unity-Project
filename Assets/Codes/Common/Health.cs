@@ -12,6 +12,9 @@ public class Health : MonoBehaviour, IDamageable
     // 체력이 바뀔 때만 발행(current, max). HealthBar 등 UI가 구독. 값 변경 시에만 갱신 → 폴링 불필요.
     public event System.Action<int, int> OnHealthChanged;
 
+    // 사망 순간 1회 발행(풀 복귀/파괴 직전). 몬스터 CoinDropper 등이 구독해 드랍 처리.
+    public event System.Action OnDied;
+
     void OnEnable()
     {
         currentHp = maxHp;
@@ -54,6 +57,8 @@ public class Health : MonoBehaviour, IDamageable
 
     void Die()
     {
+        OnDied?.Invoke();
+
         if (sourcePrefab != null)
         {
             ObjectPoolManager.Instance.Return(sourcePrefab, gameObject);
