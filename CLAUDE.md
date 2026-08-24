@@ -75,3 +75,27 @@
 | 네트워크 | 로컬, 무관 | PASS |
 | 필수값 누락/오형식 | `coinPrefab` 미할당 드랍 스킵+경고 / Coin 컴포넌트 없으면 즉시 풀 반납 / 플레이어 Wallet 없으면 획득 무시+경고 / 값·스테이지 `Mathf.Max` 하한 | PASS |
 | 비정상/권한 없는 접근 | 코인 중복 획득 `isCollected` 가드 / 풀 재사용 `OnEnable` 리셋 / `OnDied` 1회 발행 / `"Player"` 태그만 픽업 대상 | PASS |
+
+## 웨이브 / 스테이지 진행 (2026-08-24)
+
+`StageManager`(Currency)가 진행 주체. `MonsterSpawner`(Pooling)를 제어. `Health.OnDied`는 `Action<Health>`(죽은 본인 전달), `Health.SetMax(int)` 추가.
+
+- **웨이브 흐름**: 시작 → 스테이지 1 웨이브(`autoStart`) → **고정 시간 생존 또는 몬스터 전멸** 시 클리어 → 인터미션(상점) → `StartNextWave()` → 스테이지 +1 웨이브.
+- **클리어 조건**: `waveDuration` 경과(생존) **또는** 활성 몬스터 0(전멸, 스폰 1회 이상 후). 시간 클리어 시 잔몹은 `EndWave`에서 디스폰(풀 복귀, 사망 아님 → 코인 안 나옴).
+- **난이도 스케일**(스테이지↑): 스폰 간격 `baseSpawnInterval - reducePerStage×(stage-1)`(하한 `minSpawnInterval`), 몬스터 HP `base × (1 + hpGrowthPerStage×(stage-1))`(`Health.SetMax`). 코인 값도 `StageManager.CurrentStage`로 자동 스케일.
+- **상점 연동(예정)**: `OnWaveCleared(stage)` → 상점 UI 열기. 상점 "다시 시작" 버튼 OnClick → `StageManager.StartNextWave()`. 상점 UI 전까지 임시로 인터미션 중 **Space** 키로 진행(`debugSpaceToContinue`).
+- **UI 연동용 이벤트**: `OnStageChanged(int)`, `OnWaveCleared(int)`, `OnTimeChanged(float)`.
+- **활성 추적**: 스포너가 스폰 몬스터의 `OnDied` 구독(사망 시 자동 해제), 디스폰 시에도 해제 → 풀 재사용 이중 구독 방지.
+
+### 에디터 배선 (웨이브)
+1. **씬에 `StageManager` 오브젝트 배치** → `spawner`에 `MonsterSpawner` 할당, `waveDuration` 설정. (없으면 웨이브가 시작되지 않아 몬스터도 안 나옴.)
+2. **MonsterSpawner 인스펙터 재확인**: 기존 `spawnInterval` 필드가 `baseSpawnInterval` 등으로 바뀜 → 값 재설정. (`Start()`의 자동 무한 스폰 제거됨 — 이제 StageManager가 구동.)
+3. (임시) 상점 버튼 전까지 Space로 다음 웨이브 진행.
+
+### 예외 처리 검증 체크리스트 (웨이브)
+
+| 상황 | 대응 | 반영 |
+|------|------|------|
+| 네트워크 | 로컬, 무관 | PASS |
+| 필수값 누락/오형식 | `spawner` 미할당 시 경고+비활성 / `waveDuration` 하한 클램프 / 스폰 간격 `minSpawnInterval` 하한 / HP·스테이지 `Mathf.Max` | PASS |
+| 비정상 접근 | 웨이브 코루틴 중복 시작 방지(재시작 시 StopCoroutine) / 인터미션 아닐 때 `StartNextWave` 무시 / 이중 구독 방지(사망·디스폰 시 해제) / 싱글톤 중복 가드 | PASS |

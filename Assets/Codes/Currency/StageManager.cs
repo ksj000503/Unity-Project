@@ -1,14 +1,38 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 
-// 현재 스테이지 수 보관(코인 가치 스케일 등에 사용). 지금은 값 보관만 담당.
-// 씬에 없으면 소비 측에서 스테이지 1로 간주(선택적 의존). 이후 웨이브/스테이지 진행 로직이 SetStage 로 갱신.
+// 웨이브/스테이지 진행 주체(싱글톤). 스폰을 직접 하지 않고 MonsterSpawner 를 제어한다.
+// 웨이브 = 고정 시간 생존 또는 몬스터 전멸 시 클리어 → 인터미션(상점) → StartNextWave 로 다음 스테이지.
+// 스테이지 번호는 코인 가치·스폰 난이도 스케일의 기준(CurrentStage).
 public class StageManager : MonoBehaviour
 {
     public static StageManager Instance;
 
-    [SerializeField] private int currentStage = 1;
+    [SerializeField] private MonsterSpawner spawner;
+
+    [Header("웨이브")]
+    [Tooltip("웨이브 지속 시간(초, 고정)")]
+    [SerializeField] private float waveDuration = 20f;
+
+    [Tooltip("시작 시 자동으로 1스테이지 웨이브 개시")]
+    [SerializeField] private bool autoStart = true;
+
+    [Header("디버그")]
+    [Tooltip("상점 UI 전까지 임시: 인터미션 중 Space 로 다음 웨이브 시작")]
+    [SerializeField] private bool debugSpaceToContinue = true;
+
+    private int currentStage = 1;
+    private float timer;
+    private bool waveActive;
+    private bool intermission;
 
     public int CurrentStage => Mathf.Max(1, currentStage);
+    public float TimeRemaining => Mathf.Max(0f, timer);
+    public bool IsIntermission => intermission;
+
+    public event System.Action<int> OnStageChanged;   // 새 스테이지 번호(웨이브 시작 시)
+    public event System.Action<int> OnWaveCleared;    // 클리어된 스테이지 번호 → 상점 열기 신호
+    public event System.Action<float> OnTimeChanged;  // 남은 시간(초)
 
     private void Awake()
     {
@@ -19,7 +43,96 @@ public class StageManager : MonoBehaviour
         else
         {
             Destroy(gameObject);
+
+            return;
         }
+    }
+
+    private void Start()
+    {
+        if (spawner == null)
+        {
+            Debug.LogError("[StageManager] spawner 미할당 — 웨이브 진행 불가.", this);
+
+            enabled = false;
+
+            return;
+        }
+
+        spawner.OnAllMonstersCleared += HandleAllMonstersCleared;
+
+        if (autoStart) StartWave();
+    }
+
+    private void OnDestroy()
+    {
+        if (spawner != null) spawner.OnAllMonstersCleared -= HandleAllMonstersCleared;
+    }
+
+    private void StartWave()
+    {
+        waveActive = true;
+
+        intermission = false;
+
+        timer = Mathf.Max(1f, waveDuration);
+
+        OnStageChanged?.Invoke(CurrentStage);
+
+        OnTimeChanged?.Invoke(TimeRemaining);
+
+        spawner.BeginWave(CurrentStage);
+    }
+
+    private void Update()
+    {
+        if (waveActive)
+        {
+            timer -= Time.deltaTime;
+
+            OnTimeChanged?.Invoke(TimeRemaining);
+
+            if (timer <= 0f) ClearWave();
+
+            return;
+        }
+
+        // 인터미션 중 임시 진행 키(상점 버튼 연결 전 테스트용).
+        if (intermission && debugSpaceToContinue)
+        {
+            Keyboard kb = Keyboard.current;
+
+            if (kb != null && kb.spaceKey.wasPressedThisFrame) StartNextWave();
+        }
+    }
+
+    // 몬스터 전멸 → 조기 클리어.
+    private void HandleAllMonstersCleared()
+    {
+        if (waveActive) ClearWave();
+    }
+
+    private void ClearWave()
+    {
+        if (!waveActive) return;
+
+        waveActive = false;
+
+        intermission = true;
+
+        spawner.EndWave();
+
+        OnWaveCleared?.Invoke(CurrentStage);
+    }
+
+    // 상점 "다시 시작" 버튼(또는 디버그 Space)에서 호출 → 다음 스테이지 웨이브 시작.
+    public void StartNextWave()
+    {
+        if (!intermission) return;
+
+        currentStage++;
+
+        StartWave();
     }
 
     public void SetStage(int stage)

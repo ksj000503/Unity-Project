@@ -32,7 +32,7 @@ public class CoinDropper : MonoBehaviour
         if (health != null) health.OnDied -= HandleDied;
     }
 
-    private void HandleDied()
+    private void HandleDied(Health _)
     {
         if (coinPrefab == null)
         {
