@@ -9,31 +9,35 @@ public enum WeaponType
 [CreateAssetMenu(fileName = "WeaponData", menuName = "Brotato/WeaponData")]
 public class WeaponData : ScriptableObject
 {
-    [Header("½Äº°")]
+    [Header("ì‹ë³„")]
     public string weaponName = "New Weapon";
     public Sprite icon;
-    [Tooltip("Weapon ÄÄÆ÷³ÍÆ®¸¦ °¡Áø ¹«±â ÇÁ¸®ÆÕ")]
+    [Tooltip("Weapon ì»´í¬ë„ŒíŠ¸ê°€ ë¶™ì€ ë¬´ê¸° ëª¸ì²´ í”„ë¦¬íŒ¹")]
     public GameObject weaponPrefab;
 
-    [Header("¹«±â Å¸ÀÔ")]
+    [Header("ë¬´ê¸° íƒ€ì…")]
     public WeaponType weaponType = WeaponType.MeleeSpin;
 
-    [Header("°øÅë ÀüÅõ")]
+    [Header("ê³µí†µ ìŠ¤íƒ¯")]
     public int damage = 10;
-    [Tooltip("°ø°İ 1È¸ ÈÄ Àç°ø°İ±îÁö ´ë±â(ÃÊ)")]
+    [Tooltip("ê³µê²© 1íšŒ í›„ ë‹¤ìŒ ê³µê²©ê¹Œì§€ ëŒ€ê¸°(ì´ˆ)")]
     public float attackCooldown = 1f;
-    [Tooltip("ÀûÀ» Å½ÁöÇØ °ø°İÀ» ½ÃÀÛÇÏ´Â ¹İ°æ")]
+    [Tooltip("ì ì„ íƒì§€í•´ ê³µê²©í•˜ëŠ” ë°˜ê²½")]
     public float detectRange = 2.5f;
 
-    [Header("±ÙÁ¢ ½ºÇÉ")]
-    [Tooltip("360µµ µµ´Â µ¥ °É¸®´Â ½Ã°£(ÃÊ)")]
+    [Header("ê·¼ì ‘ ìŠ¤í•€")]
+    [Tooltip("360ë„ ìŠ¤í•€ 1íšŒì— ê±¸ë¦¬ëŠ” ì‹œê°„(ì´ˆ)")]
     public float spinDuration = 0.3f;
-    [Tooltip("½ºÇÉ Áß ÇÇÇØ¸¦ ÁÖ´Â ¹İ°æ")]
+    [Tooltip("ìŠ¤í•€ ì‹œ í”¼í•´ë¥¼ ì£¼ëŠ” ë°˜ê²½")]
     public float spinRadius = 1.2f;
 
-    [Header("¿ø°Å¸®")]
-    [Tooltip("¹ß»çÇÒ Åõ»çÃ¼ ÇÁ¸®ÆÕ(Projectile ÄÄÆ÷³ÍÆ® + Ç® µî·Ï ´ë»ó)")]
+    [Header("ì›ê±°ë¦¬")]
+    [Tooltip("ë°œì‚¬í•  íˆ¬ì‚¬ì²´ í”„ë¦¬íŒ¹(Projectile ì»´í¬ë„ŒíŠ¸ + í’€ ë“±ë¡ ëŒ€ìƒ)")]
     public GameObject projectilePrefab;
-    [Tooltip("Ãß°¡ °üÅë ¼ö. 0 = ´ÜÀÏ Å¸°İ, N = Àû N¸í ´õ °üÅë")]
+    [Tooltip("ì¶”ê°€ ê´€í†µ ìˆ˜. 0 = ë‹¨ì¼ íƒ€ê²©, N = ì  Nëª… ë” ê´€í†µ")]
     public int pierceCount = 0;
+
+    [Header("ìƒì ")]
+    [Tooltip("ìƒì  êµ¬ë§¤ ê°€ê²©(ì„ì‹œ ê°’, ì¸ìŠ¤í™í„°ì—ì„œ ì¡°ì •)")]
+    public int price = 10;
 }

@@ -99,3 +99,30 @@
 | 네트워크 | 로컬, 무관 | PASS |
 | 필수값 누락/오형식 | `spawner` 미할당 시 경고+비활성 / `waveDuration` 하한 클램프 / 스폰 간격 `minSpawnInterval` 하한 / HP·스테이지 `Mathf.Max` | PASS |
 | 비정상 접근 | 웨이브 코루틴 중복 시작 방지(재시작 시 StopCoroutine) / 인터미션 아닐 때 `StartNextWave` 무시 / 이중 구독 방지(사망·디스폰 시 해제) / 싱글톤 중복 가드 | PASS |
+
+## 라운드 종료 상점 UI (2026-08-24)
+
+코드 위치: `Assets/Codes/UI/ShopManager.cs`, `Assets/Codes/Currency/PlayerStats.cs`. `WeaponData`에 `price` 추가.
+
+- **열림/닫힘**: `StageManager.OnWaveCleared` 구독 → 상점 표시 + `Time.timeScale=0`(일시정지). "다음 라운드" 버튼 → 닫고 `Time.timeScale=1` + `StageManager.StartNextWave()`. (StageManager는 디버그 Space 기본 OFF + `StartNextWave`에서 timeScale 방어 복구.)
+- **UI 자가 생성**: 전체화면 Canvas(Overlay)·카드·버튼을 런타임 생성(HealthBar 방식). EventSystem 없으면 신규 Input System 모듈로 자동 생성.
+- **레이아웃(그림 매핑)**: 골드(상단) / 무기1·2·3 카드(구매) / 현재 스탯(우측) / 돌리기·다음 라운드(하단).
+- **구매**: 카드 클릭 → `CurrencyWallet.TrySpend(price)` → `WeaponSlotManager.AddWeapon`(중복이면 레벨업). 6슬롯 만석+신규면 AddWeapon 실패 → **환불**. 성공 시 카드 "판매완료" 비활성(F).
+- **돌리기**: `rerollCost` 차감 후 후보 3개 재추첨. 골드 부족 시 버튼 비활성.
+- **현재 스탯**: `PlayerStats.GetStatLines()`(공격력·공격속도·이동속도·최대HP) 표시. 이후 장비/버프가 값 조정하면 자동 반영(확장 지점: `AddAttackPower` 등).
+- **가격/비용(임시, B·C)**: `WeaponData.price`, `ShopManager.rerollCost` 인스펙터 값 → 나중에 조정.
+- **후보 풀**: `ShopManager.shopPool`(List\<WeaponData\>). 현재 근접 1개뿐 → 채우면 카드가 다양해짐.
+
+### 에디터 배선 (상점)
+1. **씬에 `ShopManager` 오브젝트 추가**. `shopPool`에 구매 후보 WeaponData 할당(없으면 카드 비어있음, "다음 라운드"만 동작).
+2. 참조(slotManager/wallet/playerStats)는 비워두면 `"Player"` 태그에서 자동 탐색 — Player에 `WeaponSlotManager`·`CurrencyWallet`·`PlayerStats` 필요.
+3. Player에 **`PlayerStats`** 컴포넌트 추가(스탯 패널 표시용).
+4. `WeaponData` 에셋들 `price` 설정.
+
+### 예외 처리 검증 체크리스트 (상점)
+
+| 상황 | 대응 | 반영 |
+|------|------|------|
+| 네트워크 | 로컬, 무관 | PASS |
+| 필수값 누락/오형식 | 후보 풀 비면 카드 "-" 비활성 / 골드 부족 시 구매·돌리기 버튼 비활성 / price·rerollCost `Mathf.Max` / PlayerStats 없으면 안내 문구 | PASS |
+| 비정상 접근 | 6슬롯 만석+신규 구매 차단(환불) / 판매완료 재구매 차단 / 상점 밖 Buy/Reroll 무시(`isOpen`) / 닫을 때 timeScale 복구(StartNextWave 방어 포함) / EventSystem 자동 생성 | PASS |

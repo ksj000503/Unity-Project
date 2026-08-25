@@ -18,8 +18,8 @@ public class StageManager : MonoBehaviour
     [SerializeField] private bool autoStart = true;
 
     [Header("디버그")]
-    [Tooltip("상점 UI 전까지 임시: 인터미션 중 Space 로 다음 웨이브 시작")]
-    [SerializeField] private bool debugSpaceToContinue = true;
+    [Tooltip("임시: 인터미션 중 Space 로 다음 웨이브. 상점(ShopManager) 사용 시 꺼두세요.")]
+    [SerializeField] private bool debugSpaceToContinue = false;
 
     private int currentStage = 1;
     private float timer;
@@ -129,6 +129,9 @@ public class StageManager : MonoBehaviour
     public void StartNextWave()
     {
         if (!intermission) return;
+
+        // 상점에서 일시정지했을 수 있으니 방어적으로 복구.
+        Time.timeScale = 1f;
 
         currentStage++;
 
