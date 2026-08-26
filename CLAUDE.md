@@ -126,3 +126,12 @@
 | 네트워크 | 로컬, 무관 | PASS |
 | 필수값 누락/오형식 | 후보 풀 비면 카드 "-" 비활성 / 골드 부족 시 구매·돌리기 버튼 비활성 / price·rerollCost `Mathf.Max` / PlayerStats 없으면 안내 문구 | PASS |
 | 비정상 접근 | 6슬롯 만석+신규 구매 차단(환불) / 판매완료 재구매 차단 / 상점 밖 Buy/Reroll 무시(`isOpen`) / 닫을 때 timeScale 복구(StartNextWave 방어 포함) / EventSystem 자동 생성 | PASS |
+
+## HUD 상단바 (2026-08-24)
+
+코드 위치: `Assets/Codes/UI/HUDManager.cs`. 런타임 자가 생성, 이벤트로만 갱신(폴링 없음).
+
+- **표시**: 라운드(좌상, `OnStageChanged`) / 시간(중앙상단, `OnTimeChanged`, 남은 초 올림) / 골드(우상, `CurrencyWallet.OnChanged`).
+- **캔버스**: Overlay, sortingOrder 100(상점 200보다 아래 → 상점 열리면 딤 뒤로). 버튼 없어 EventSystem 불필요.
+- **배선**: 씬에 `HUDManager` 오브젝트 하나 추가. `wallet`은 비우면 `"Player"` 태그에서 탐색. 라운드/시간은 `StageManager` 필요.
+- **예외**: StageManager/Wallet 없으면 경고 후 해당 값 0/미표시, 시간 `Max(0)` 클램프. PASS.
