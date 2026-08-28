@@ -9,6 +9,9 @@ public class Health : MonoBehaviour, IDamageable
 
     private GameObject sourcePrefab;
 
+    [Tooltip("사망 시 오브젝트 파괴 여부. 플레이어는 false(파괴 대신 OnDied만 발행 → 게임오버 처리).")]
+    [SerializeField] private bool destroyOnDeath = true;
+
     // 체력이 바뀔 때만 발행(current, max). HealthBar 등 UI가 구독. 값 변경 시에만 갱신 → 폴링 불필요.
     public event System.Action<int, int> OnHealthChanged;
 
@@ -73,9 +76,10 @@ public class Health : MonoBehaviour, IDamageable
         {
             ObjectPoolManager.Instance.Return(sourcePrefab, gameObject);
         }
-        else
+        else if (destroyOnDeath)
         {
             Destroy(gameObject);
         }
+        // destroyOnDeath=false 이고 풀 소속도 아니면(플레이어): 파괴 안 하고 OnDied 로만 처리.
     }
 }

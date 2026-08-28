@@ -135,3 +135,26 @@
 - **캔버스**: Overlay, sortingOrder 100(상점 200보다 아래 → 상점 열리면 딤 뒤로). 버튼 없어 EventSystem 불필요.
 - **배선**: 씬에 `HUDManager` 오브젝트 하나 추가. `wallet`은 비우면 `"Player"` 태그에서 탐색. 라운드/시간은 `StageManager` 필요.
 - **예외**: StageManager/Wallet 없으면 경고 후 해당 값 0/미표시, 시간 `Max(0)` 클램프. PASS.
+
+## 플레이어 사망 / 게임오버 (2026-08-24)
+
+코드: `Assets/Codes/UI/GameOverManager.cs`, `Health.cs`에 `destroyOnDeath` 플래그.
+
+- **플레이어 피해**: `MeleeAttack`은 트리거 접촉 `IDamageable`을 때림 → **Player에 `Health` 추가하면 몬스터 근접이 실제로 플레이어를 깎기 시작**(코드 수정 없음). HP는 기존 HealthBar로 표시.
+- **사망 처리**: `Health.Die`에서 풀 소속이면 풀 복귀, 아니고 `destroyOnDeath=true`면 파괴, **`destroyOnDeath=false`(플레이어)면 파괴 안 하고 `OnDied`만 발행**(HUD/상점이 태그로 계속 찾을 수 있게).
+- **게임오버**: `GameOverManager`가 플레이어 `OnDied` 구독 → `Time.timeScale=0` + "게임 오버" 패널(런타임 자가 생성, sortingOrder 300). "다시 시작" → `timeScale=1` + 현재 씬 리로드(완전 초기화).
+
+### 에디터 배선 (게임오버)
+1. **Player에 `Health` 추가** → `maxHp` 설정(예: 100), **`destroyOnDeath` 체크 해제**(false). ← 안 풀면 사망 시 플레이어가 파괴됨.
+2. **씬에 `GameOverManager` 오브젝트 추가**(`playerHealth` 비우면 Player 태그 자동 탐색).
+3. Player HP바를 원하면 Player에 `HealthBar`도 추가.
+
+> 참고: 현재 `MeleeAttack`은 접촉 순간 1회 피해(지속 피해 아님). 몬스터끼리도 트리거 접촉 시 서로 피해를 줄 수 있음(기존 동작) — 원하면 피아 구분 레이어 체크를 넣어줄 수 있음.
+
+### 예외 처리 검증 체크리스트 (게임오버)
+
+| 상황 | 대응 | 반영 |
+|------|------|------|
+| 네트워크 | 로컬, 무관 | PASS |
+| 필수값 누락/오형식 | 플레이어 Health 없으면 경고(게임오버 미발동) / maxHp≤0은 TakeDamage 가드 | PASS |
+| 비정상 접근 | 중복 게임오버 `isGameOver` 가드 / 사망 이벤트 1회(currentHp≤0 재진입 차단) / 리로드 시 `timeScale=1` 복구 / EventSystem 자동 생성 | PASS |
