@@ -220,6 +220,20 @@ MonoBehaviour:
   enemyMask:
     serializedVersion: 2
     m_Bits: 64
+--- !u!114 &511900108
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 511900106}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bfcdc862cff6c4343adb557e6e6b2dba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WeaponInputHandler
+  meleeWeapon: {fileID: 11400000, guid: 35656f6504be11547aba5cafbc4f9203, type: 2}
+  rangedWeapon: {fileID: 0}
 --- !u!1 &519420028
 GameObject:
   m_ObjectHideFlags: 0
@@ -675,6 +689,54 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 1, y: 1}
   m_EdgeRadius: 0
+--- !u!1 &1678906450
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1678906452}
+  - component: {fileID: 1678906451}
+  m_Layer: 0
+  m_Name: StageManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1678906451
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1678906450}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 51a087527f3670542ae982bcccb969c2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StageManager
+  spawner: {fileID: 1777757547}
+  waveDuration: 20
+  autoStart: 1
+  debugSpaceToContinue: 0
+--- !u!4 &1678906452
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1678906450}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.11253, y: 0.00216, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1710229117
 GameObject:
   m_ObjectHideFlags: 0
@@ -786,7 +848,10 @@ MonoBehaviour:
   mapData: {fileID: 11400000, guid: 7ba5c8ecad3bf0d4fb47a9ea98c7bb79, type: 2}
   playerExclusionRadius: 2
   maxSpawnAttempts: 10
-  spawnInterval: 5
+  baseSpawnInterval: 1.5
+  spawnIntervalReducePerStage: 0.1
+  minSpawnInterval: 0.3
+  hpGrowthPerStage: 0.15
 --- !u!4 &1777757548
 Transform:
   m_ObjectHideFlags: 0
@@ -939,6 +1004,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 639039751591429972, guid: 8bed6a11ea17de14ca993e5ee00ad211, type: 3}
       insertIndex: -1
       addedObject: {fileID: 511900107}
+    - targetCorrespondingSourceObject: {fileID: 639039751591429972, guid: 8bed6a11ea17de14ca993e5ee00ad211, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 511900108}
   m_SourcePrefab: {fileID: 100100000, guid: 8bed6a11ea17de14ca993e5ee00ad211, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
@@ -951,3 +1019,4 @@ SceneRoots:
   - {fileID: 375991840}
   - {fileID: 776158078055181164}
   - {fileID: 1777757548}
+  - {fileID: 1678906452}
