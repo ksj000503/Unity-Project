@@ -339,7 +339,7 @@ public class ShopManager : MonoBehaviour
     {
         if (EventSystem.current != null) return;
 
-        if (FindObjectOfType<EventSystem>() != null) return;
+        if (FindAnyObjectByType<EventSystem>() != null) return;
 
         var es = new GameObject("EventSystem");
 

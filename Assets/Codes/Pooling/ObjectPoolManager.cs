@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class ObjectPoolManager : MonoBehaviour
@@ -22,14 +21,25 @@ public class ObjectPoolManager : MonoBehaviour
 
     public GameObject Get(GameObject prefab)
     {
-        if(!pool.ContainsKey(prefab))
+        // 프리팹이 없거나(참조 파괴/미할당) 하면 안전하게 무시.
+        if (prefab == null)
+        {
+            return null;
+        }
+
+        if (!pool.ContainsKey(prefab))
         {
             pool[prefab] = new Queue<GameObject>();
         }
 
-        if(pool[prefab].Count > 0)
+        if (pool[prefab].Count > 0)
         {
             GameObject obj = pool[prefab].Dequeue();
+
+            if (obj == null)
+            {
+                return Instantiate(prefab);
+            }
 
             obj.SetActive(true);
 
@@ -43,7 +53,22 @@ public class ObjectPoolManager : MonoBehaviour
 
     public void Return(GameObject prefab, GameObject obj)
     {
+        if (obj == null)
+        {
+            return;
+        }
+
         obj.SetActive(false);
+
+        if (prefab == null)
+        {
+            return;
+        }
+
+        if (!pool.ContainsKey(prefab))
+        {
+            pool[prefab] = new Queue<GameObject>();
+        }
 
         pool[prefab].Enqueue(obj);
     }

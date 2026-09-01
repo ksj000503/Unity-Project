@@ -34,6 +34,7 @@ public class MonsterSpawner : MonoBehaviour
 
     private Transform player;
     private int baseMonsterHp = 1;
+    private Camera cam;
 
     private bool spawning;
     private bool hasSpawnedThisWave;
@@ -42,7 +43,8 @@ public class MonsterSpawner : MonoBehaviour
 
     private readonly HashSet<Health> active = new HashSet<Health>();
 
-    void Start()
+    // Awake 에서 참조를 잡아야 StageManager.Start 의 BeginWave 호출 시점에 player 가 준비됨(실행 순서 안전).
+    void Awake()
     {
         if (monsterPrefab == null)
         {
@@ -75,6 +77,9 @@ public class MonsterSpawner : MonoBehaviour
         {
             baseMonsterHp = Mathf.Max(1, prefabHealth.MaxHp());
         }
+
+        // 같은 몬스터 레이어끼리는 충돌·트리거 판정을 끔 → 몬스터끼리 서로 때리는(피아) 피해 원천 차단.
+        Physics2D.IgnoreLayerCollision(monsterPrefab.layer, monsterPrefab.layer, true);
     }
 
     // 웨이브 시작: 해당 스테이지 난이도로 스폰 개시.
@@ -108,6 +113,19 @@ public class MonsterSpawner : MonoBehaviour
         DespawnAll();
     }
 
+    // 씬 리로드/오브젝트 파괴 시 스폰 코루틴이 사라진 참조를 건드리지 않도록 즉시 정지.
+    private void OnDisable()
+    {
+        spawning = false;
+
+        if (spawnRoutine != null)
+        {
+            StopCoroutine(spawnRoutine);
+
+            spawnRoutine = null;
+        }
+    }
+
     private IEnumerator SpawnRoutine()
     {
         float interval = Mathf.Max(minSpawnInterval, baseSpawnInterval - spawnIntervalReducePerStage * (currentStage - 1));
@@ -124,6 +142,8 @@ public class MonsterSpawner : MonoBehaviour
 
     private void SpawnMonster()
     {
+        if (monsterPrefab == null) return;
+
         if (!TryGetSpawnPosition(out Vector2 spawnPos))
         {
             Debug.LogWarning("[MonsterSpawner] 스폰 위치를 찾지 못했습니다.");
@@ -132,6 +152,8 @@ public class MonsterSpawner : MonoBehaviour
         }
 
         GameObject monster = ObjectPoolManager.Instance.Get(monsterPrefab);
+
+        if (monster == null) return;
 
         monster.transform.position = spawnPos;
 
@@ -188,11 +210,32 @@ public class MonsterSpawner : MonoBehaviour
     {
         float exclusionSqr = playerExclusionRadius * playerExclusionRadius;
 
+        // 스폰 영역 = 카메라 화면 안(살짝 안쪽). 카메라 없으면 MapData 로 폴백.
+        float minX, maxX, minY, maxY;
+
+        if (cam == null) cam = Camera.main;
+        if (cam == null) cam = FindAnyObjectByType<Camera>();
+
+        if (cam != null && cam.orthographic)
+        {
+            float inset = 0.92f;
+            float halfH = cam.orthographicSize * inset;
+            float halfW = cam.orthographicSize * cam.aspect * inset;
+            Vector2 center = cam.transform.position;
+            minX = center.x - halfW; maxX = center.x + halfW;
+            minY = center.y - halfH; maxY = center.y + halfH;
+        }
+        else
+        {
+            minX = mapData.minBounds.x; maxX = mapData.maxBounds.x;
+            minY = mapData.minBounds.y; maxY = mapData.maxBounds.y;
+        }
+
         for (int i = 0; i < maxSpawnAttempts; i++)
         {
-            float x = Random.Range(mapData.minBounds.x, mapData.maxBounds.x);
+            float x = Random.Range(minX, maxX);
 
-            float y = Random.Range(mapData.minBounds.y, mapData.maxBounds.y);
+            float y = Random.Range(minY, maxY);
 
             Vector2 candidate = new Vector2(x, y);
 

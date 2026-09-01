@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 // 웨이브/스테이지 진행 주체(싱글톤). 스폰을 직접 하지 않고 MonsterSpawner 를 제어한다.
-// 웨이브 = 고정 시간 생존 또는 몬스터 전멸 시 클리어 → 인터미션(상점) → StartNextWave 로 다음 스테이지.
+// 웨이브 = 고정 시간(waveDuration) 경과 시에만 클리어 → 인터미션(상점) → StartNextWave 로 다음 스테이지.
 // 스테이지 번호는 코인 가치·스폰 난이도 스케일의 기준(CurrentStage).
 public class StageManager : MonoBehaviour
 {
@@ -59,14 +59,7 @@ public class StageManager : MonoBehaviour
             return;
         }
 
-        spawner.OnAllMonstersCleared += HandleAllMonstersCleared;
-
         if (autoStart) StartWave();
-    }
-
-    private void OnDestroy()
-    {
-        if (spawner != null) spawner.OnAllMonstersCleared -= HandleAllMonstersCleared;
     }
 
     private void StartWave()
@@ -104,12 +97,6 @@ public class StageManager : MonoBehaviour
 
             if (kb != null && kb.spaceKey.wasPressedThisFrame) StartNextWave();
         }
-    }
-
-    // 몬스터 전멸 → 조기 클리어.
-    private void HandleAllMonstersCleared()
-    {
-        if (waveActive) ClearWave();
     }
 
     private void ClearWave()
