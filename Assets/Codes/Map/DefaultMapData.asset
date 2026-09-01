@@ -12,5 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 409c6c5cddf64ec4fabc707f50ab7389, type: 3}
   m_Name: DefaultMapData
   m_EditorClassIdentifier: Assembly-CSharp::MapData
-  minBounds: {x: -21, y: -12}
-  maxBounds: {x: 21, y: 12}
+  minBounds: {x: -30, y: -17}
+  maxBounds: {x: 30, y: 17}
