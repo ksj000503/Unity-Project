@@ -5,10 +5,32 @@ using System.Collections.Generic;
 // 몬스터 스폰. 웨이브 단위로 StageManager 가 BeginWave/EndWave 로 제어한다.
 // 스테이지가 오를수록 스폰 간격이 짧아지고 몬스터 HP가 조금씩 증가.
 // 활성 몬스터가 전멸하면 OnAllMonstersCleared 발행(웨이브 조기 클리어용).
+//
+// [다중 몬스터] monsterTable(가중치·최소스테이지)에서 뽑아 스폰. 비어 있으면 monsterPrefab 폴백.
+// [보스] bossPrefab 이 있고 stage % bossEveryStages == 0 이면 웨이브 시작 시 보스 1마리 추가 스폰.
 public class MonsterSpawner : MonoBehaviour
 {
-    [SerializeField]
-    private GameObject monsterPrefab;
+    // 일반 몬스터 후보 1종. weight=상대 출현 확률, minStage=이 스테이지부터 등장.
+    [System.Serializable]
+    public class SpawnEntry
+    {
+        public GameObject prefab;
+        public float weight = 1f;
+        public int minStage = 1;
+    }
+
+    [Header("일반 몬스터 (가중치 추첨)")]
+    [Tooltip("여러 종류를 가중치로 추첨. 비어 있으면 아래 monsterPrefab 을 사용.")]
+    [SerializeField] private List<SpawnEntry> monsterTable = new List<SpawnEntry>();
+
+    [Tooltip("폴백/기본 몬스터(monsterTable 이 비었을 때 사용). 하위호환용.")]
+    [SerializeField] private GameObject monsterPrefab;
+
+    [Header("보스")]
+    [Tooltip("보스 프리팹(없으면 보스 미등장).")]
+    [SerializeField] private GameObject bossPrefab;
+    [Tooltip("몇 스테이지마다 보스가 등장하는지(예: 5 → 5,10,15…). 0 이면 등장 안 함.")]
+    [SerializeField] private int bossEveryStages = 5;
 
     [SerializeField]
     private MapData mapData;
@@ -33,7 +55,6 @@ public class MonsterSpawner : MonoBehaviour
     public event System.Action OnAllMonstersCleared;
 
     private Transform player;
-    private int baseMonsterHp = 1;
     private Camera cam;
 
     private bool spawning;
@@ -42,13 +63,17 @@ public class MonsterSpawner : MonoBehaviour
     private Coroutine spawnRoutine;
 
     private readonly HashSet<Health> active = new HashSet<Health>();
+    // 각 활성 몬스터가 어느 프리팹 풀에서 나왔는지 → 디스폰 시 올바른 풀로 반환.
+    private readonly Dictionary<Health, GameObject> sourceOf = new Dictionary<Health, GameObject>();
+    // 프리팹별 기준 HP 캐시(원본 유지, 매 스폰 GetComponent 회피).
+    private readonly Dictionary<GameObject, int> baseHpOf = new Dictionary<GameObject, int>();
 
     // Awake 에서 참조를 잡아야 StageManager.Start 의 BeginWave 호출 시점에 player 가 준비됨(실행 순서 안전).
     void Awake()
     {
-        if (monsterPrefab == null)
+        if (!HasAnySpawnable())
         {
-            Debug.LogWarning("[MonsterSpawner] monsterPrefab 이 비어있습니다.");
+            Debug.LogWarning("[MonsterSpawner] 스폰 가능한 몬스터가 없습니다(monsterTable/monsterPrefab/bossPrefab 모두 비어있음).");
 
             return;
         }
@@ -70,28 +95,31 @@ public class MonsterSpawner : MonoBehaviour
         }
         player = playerObj.transform;
 
-        // 프리팹의 기준 HP 를 스테이지 스케일 기준값으로 캐시(인스턴스 필드가 덮여도 원본 유지).
-        Health prefabHealth = monsterPrefab.GetComponent<Health>();
-
-        if (prefabHealth != null)
-        {
-            baseMonsterHp = Mathf.Max(1, prefabHealth.MaxHp());
-        }
-
         // 같은 몬스터 레이어끼리는 충돌·트리거 판정을 끔 → 몬스터끼리 서로 때리는(피아) 피해 원천 차단.
-        Physics2D.IgnoreLayerCollision(monsterPrefab.layer, monsterPrefab.layer, true);
+        GameObject sample = FirstSpawnable();
+
+        if (sample != null)
+        {
+            Physics2D.IgnoreLayerCollision(sample.layer, sample.layer, true);
+        }
     }
 
-    // 웨이브 시작: 해당 스테이지 난이도로 스폰 개시.
+    // 웨이브 시작: 해당 스테이지 난이도로 스폰 개시. 보스 스테이지면 보스 1마리 즉시 스폰.
     public void BeginWave(int stage)
     {
-        if (player == null || monsterPrefab == null || mapData == null) return;
+        if (player == null || mapData == null || !HasAnySpawnable()) return;
 
         currentStage = Mathf.Max(1, stage);
 
         hasSpawnedThisWave = false;
 
         spawning = true;
+
+        // 보스 등장 조건: bossPrefab 존재 + 주기 일치.
+        if (bossPrefab != null && bossEveryStages > 0 && currentStage % bossEveryStages == 0)
+        {
+            SpawnOne(bossPrefab);
+        }
 
         if (spawnRoutine != null) StopCoroutine(spawnRoutine);
 
@@ -142,7 +170,13 @@ public class MonsterSpawner : MonoBehaviour
 
     private void SpawnMonster()
     {
-        if (monsterPrefab == null) return;
+        SpawnOne(PickPrefab());
+    }
+
+    // 실제 스폰 1마리. prefab 별 기준 HP 를 스테이지 스케일로 덮어씀. 소스 프리팹 추적.
+    private void SpawnOne(GameObject prefab)
+    {
+        if (prefab == null) return;
 
         if (!TryGetSpawnPosition(out Vector2 spawnPos))
         {
@@ -151,7 +185,7 @@ public class MonsterSpawner : MonoBehaviour
             return;
         }
 
-        GameObject monster = ObjectPoolManager.Instance.Get(monsterPrefab);
+        GameObject monster = ObjectPoolManager.Instance.Get(prefab);
 
         if (monster == null) return;
 
@@ -161,14 +195,16 @@ public class MonsterSpawner : MonoBehaviour
 
         if (health != null)
         {
-            health.SetSourcePrefab(monsterPrefab);
+            health.SetSourcePrefab(prefab);
 
             // 스테이지 스케일 HP 적용(Get 직후 OnEnable 리셋 이후에 덮어씀).
-            int scaledHp = Mathf.RoundToInt(baseMonsterHp * (1f + hpGrowthPerStage * (currentStage - 1)));
+            int scaledHp = Mathf.RoundToInt(BaseHpOf(prefab) * (1f + hpGrowthPerStage * (currentStage - 1)));
 
             health.SetMax(Mathf.Max(1, scaledHp));
 
             active.Add(health);
+
+            sourceOf[health] = prefab;
 
             health.OnDied += HandleMonsterDied;
         }
@@ -176,9 +212,61 @@ public class MonsterSpawner : MonoBehaviour
         hasSpawnedThisWave = true;
     }
 
+    // monsterTable 에서 (스테이지 조건 통과분) 가중치 추첨. 비면 monsterPrefab 폴백.
+    private GameObject PickPrefab()
+    {
+        float total = 0f;
+
+        for (int i = 0; i < monsterTable.Count; i++)
+        {
+            SpawnEntry e = monsterTable[i];
+
+            if (e != null && e.prefab != null && currentStage >= e.minStage)
+            {
+                total += Mathf.Max(0f, e.weight);
+            }
+        }
+
+        if (total <= 0f) return monsterPrefab;
+
+        float r = Random.value * total;
+
+        for (int i = 0; i < monsterTable.Count; i++)
+        {
+            SpawnEntry e = monsterTable[i];
+
+            if (e == null || e.prefab == null || currentStage < e.minStage) continue;
+
+            r -= Mathf.Max(0f, e.weight);
+
+            if (r <= 0f) return e.prefab;
+        }
+
+        return monsterPrefab;
+    }
+
+    private int BaseHpOf(GameObject prefab)
+    {
+        if (prefab == null) return 1;
+
+        if (baseHpOf.TryGetValue(prefab, out int cached)) return cached;
+
+        int hp = 1;
+
+        Health ph = prefab.GetComponent<Health>();
+
+        if (ph != null) hp = Mathf.Max(1, ph.MaxHp());
+
+        baseHpOf[prefab] = hp;
+
+        return hp;
+    }
+
     private void HandleMonsterDied(Health h)
     {
         active.Remove(h);
+
+        sourceOf.Remove(h);
 
         h.OnDied -= HandleMonsterDied;
 
@@ -199,11 +287,41 @@ public class MonsterSpawner : MonoBehaviour
 
             if (h.gameObject.activeSelf)
             {
-                ObjectPoolManager.Instance.Return(monsterPrefab, h.gameObject);
+                GameObject src = sourceOf.TryGetValue(h, out GameObject p) ? p : monsterPrefab;
+
+                ObjectPoolManager.Instance.Return(src, h.gameObject);
             }
         }
 
         active.Clear();
+
+        sourceOf.Clear();
+    }
+
+    private bool HasAnySpawnable()
+    {
+        if (monsterPrefab != null) return true;
+
+        if (bossPrefab != null) return true;
+
+        for (int i = 0; i < monsterTable.Count; i++)
+        {
+            if (monsterTable[i] != null && monsterTable[i].prefab != null) return true;
+        }
+
+        return false;
+    }
+
+    private GameObject FirstSpawnable()
+    {
+        for (int i = 0; i < monsterTable.Count; i++)
+        {
+            if (monsterTable[i] != null && monsterTable[i].prefab != null) return monsterTable[i].prefab;
+        }
+
+        if (monsterPrefab != null) return monsterPrefab;
+
+        return bossPrefab;
     }
 
     private bool TryGetSpawnPosition(out Vector2 result)
