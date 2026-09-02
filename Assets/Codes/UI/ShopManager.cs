@@ -45,6 +45,7 @@ public class ShopManager : MonoBehaviour
     private Button rerollButton;
     private Text rerollText;
     private readonly List<Card> cards = new List<Card>();
+    private Font resolvedFont; // 진단/재사용용 실제 로드된 폰트
 
     private bool isOpen;
 
@@ -111,6 +112,17 @@ public class ShopManager : MonoBehaviour
         RefreshGold();
 
         RefreshStats();
+
+        // --- 진단 로그: 상점 무기 미표시 원인 특정용 (해결되면 제거 가능) ---
+        Debug.Log($"[ShopManager] 열림 | shopPool={(shopPool == null ? -1 : shopPool.Count)} cards={cards.Count} offerCount={offerCount} font={(resolvedFont != null ? resolvedFont.name : "null")}", this);
+        for (int i = 0; i < cards.Count; i++)
+        {
+            WeaponData w = cards[i].weapon;
+            string desc = (w != null)
+                ? $"{(string.IsNullOrEmpty(w.weaponName) ? w.name : w.weaponName)} / {w.price}G"
+                : "무기 없음 (shopPool 비었음)";
+            Debug.Log($"[ShopManager]   카드{i + 1}: {desc}", this);
+        }
     }
 
     private void CloseShopAndContinue()
@@ -223,7 +235,7 @@ public class ShopManager : MonoBehaviour
     {
         if (c.weapon == null)
         {
-            c.nameText.text = "-";
+            c.nameText.text = (shopPool == null || shopPool.Count == 0) ? "(무기 풀 비었음)" : "-";
             c.priceText.text = "";
 
             return;
@@ -255,6 +267,7 @@ public class ShopManager : MonoBehaviour
     private void BuildUI()
     {
         Font font = ResolveFont();
+        resolvedFont = font;
 
         EnsureEventSystem();
 
@@ -284,7 +297,9 @@ public class ShopManager : MonoBehaviour
         // 무기 카드 3장.
         float[] xs = { -600f, -330f, -60f };
 
-        for (int i = 0; i < offerCount; i++)
+        int count = Mathf.Max(1, offerCount); // 직렬화 값이 0이어도 최소 1장은 생성(카드 미표시 방지)
+
+        for (int i = 0; i < count; i++)
         {
             float x = (i < xs.Length) ? xs[i] : (-600f + i * 270f);
 
@@ -355,6 +370,11 @@ public class ShopManager : MonoBehaviour
         Font f = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
 
         if (f == null) f = Resources.GetBuiltinResource<Font>("Arial.ttf");
+
+        // 빌트인 폰트가 null 이면(에디터/버전 이슈) OS 폰트로 폴백 → 카드·버튼 텍스트가 통째로 안 보이는 문제 방지.
+        if (f == null) f = Font.CreateDynamicFontFromOSFont(new[] { "Malgun Gothic", "Arial", "돋움" }, 16);
+
+        if (f == null) Debug.LogWarning("[ShopManager] 폰트 로드 실패 — 카드/버튼 텍스트가 보이지 않을 수 있습니다.", this);
 
         return f;
     }
