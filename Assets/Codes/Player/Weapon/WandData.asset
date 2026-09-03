@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 919fbdf6fe30b9f4da0f6cf894270c41, type: 3}
+  m_Name: WandData
+  m_EditorClassIdentifier: Assembly-CSharp::WeaponData
+  weaponName: 완드
+  icon: {fileID: 0}
+  weaponPrefab: {fileID: 2019112685273845732, guid: a095825dcd42401ea3a8fafb2f4f1d67, type: 3}
+  weaponType: 1
+  damage: 8
+  attackCooldown: 1.0
+  detectRange: 6
+  spinDuration: 0.3
+  spinRadius: 1
+  projectilePrefab: {fileID: 4736016299012837261, guid: b1316e0d3d804220ae0ad9dc02f1cad7, type: 3}
+  pierceCount: 2
+  price: 18

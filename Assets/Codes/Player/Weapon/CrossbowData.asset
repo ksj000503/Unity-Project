@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 919fbdf6fe30b9f4da0f6cf894270c41, type: 3}
+  m_Name: CrossbowData
+  m_EditorClassIdentifier: Assembly-CSharp::WeaponData
+  weaponName: 석궁
+  icon: {fileID: 0}
+  weaponPrefab: {fileID: 1334156891092801961, guid: 897af1168ec04034a5e7b2bf461a13c6, type: 3}
+  weaponType: 1
+  damage: 12
+  attackCooldown: 1.1
+  detectRange: 6
+  spinDuration: 0.3
+  spinRadius: 1
+  projectilePrefab: {fileID: 4736016299012837261, guid: b1316e0d3d804220ae0ad9dc02f1cad7, type: 3}
+  pierceCount: 1
+  price: 16

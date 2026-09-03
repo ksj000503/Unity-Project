@@ -45,7 +45,6 @@ public class ShopManager : MonoBehaviour
     private Button rerollButton;
     private Text rerollText;
     private readonly List<Card> cards = new List<Card>();
-    private Font resolvedFont; // 진단/재사용용 실제 로드된 폰트
 
     private bool isOpen;
 
@@ -112,17 +111,6 @@ public class ShopManager : MonoBehaviour
         RefreshGold();
 
         RefreshStats();
-
-        // --- 진단 로그: 상점 무기 미표시 원인 특정용 (해결되면 제거 가능) ---
-        Debug.Log($"[ShopManager] 열림 | shopPool={(shopPool == null ? -1 : shopPool.Count)} cards={cards.Count} offerCount={offerCount} font={(resolvedFont != null ? resolvedFont.name : "null")}", this);
-        for (int i = 0; i < cards.Count; i++)
-        {
-            WeaponData w = cards[i].weapon;
-            string desc = (w != null)
-                ? $"{(string.IsNullOrEmpty(w.weaponName) ? w.name : w.weaponName)} / {w.price}G"
-                : "무기 없음 (shopPool 비었음)";
-            Debug.Log($"[ShopManager]   카드{i + 1}: {desc}", this);
-        }
     }
 
     private void CloseShopAndContinue()
@@ -147,13 +135,37 @@ public class ShopManager : MonoBehaviour
 
     private void RollOffers()
     {
+        // 풀을 섞어 카드마다 최대한 겹치지 않게 배정.
+        // 풀이 카드 수보다 적으면(예: 2종·3카드) 앞 카드들은 서로 다른 무기로 채우고
+        // 남는 카드만 무작위 반복 → 매 상점마다 보유 무기 종류가 최소 한 번씩은 노출됨.
+        List<WeaponData> bag = null;
+
+        if (shopPool != null && shopPool.Count > 0)
+        {
+            bag = new List<WeaponData>(shopPool);
+
+            for (int i = bag.Count - 1; i > 0; i--) // Fisher-Yates 셔플
+            {
+                int j = Random.Range(0, i + 1);
+
+                WeaponData tmp = bag[i];
+                bag[i] = bag[j];
+                bag[j] = tmp;
+            }
+        }
+
         for (int i = 0; i < cards.Count; i++)
         {
             Card c = cards[i];
 
-            c.weapon = (shopPool != null && shopPool.Count > 0)
-                ? shopPool[Random.Range(0, shopPool.Count)]
-                : null;
+            if (bag != null && bag.Count > 0)
+            {
+                c.weapon = (i < bag.Count) ? bag[i] : bag[Random.Range(0, bag.Count)];
+            }
+            else
+            {
+                c.weapon = null;
+            }
 
             c.sold = false;
 
@@ -267,7 +279,6 @@ public class ShopManager : MonoBehaviour
     private void BuildUI()
     {
         Font font = ResolveFont();
-        resolvedFont = font;
 
         EnsureEventSystem();
 

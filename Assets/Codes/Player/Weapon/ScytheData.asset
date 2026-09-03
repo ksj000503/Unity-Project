@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 919fbdf6fe30b9f4da0f6cf894270c41, type: 3}
+  m_Name: ScytheData
+  m_EditorClassIdentifier: Assembly-CSharp::WeaponData
+  weaponName: 낫
+  icon: {fileID: 0}
+  weaponPrefab: {fileID: 6366152617320153923, guid: 12a086a36ab148bb875ec5a1a3395d68, type: 3}
+  weaponType: 0
+  damage: 15
+  attackCooldown: 1.2
+  detectRange: 1.8
+  spinDuration: 0.3
+  spinRadius: 1.6
+  projectilePrefab: {fileID: 0}
+  pierceCount: 0
+  price: 20
