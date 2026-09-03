@@ -701,7 +701,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4125b93684159024cbe39882a9f2907c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MonsterSpawner
+  monsterTable:
+  - prefab: {fileID: 523535490176711447, guid: cf3842ee94211234b943f2e47c76c121, type: 3}
+    weight: 1
+    minStage: 1
+  - prefab: {fileID: 4238661196570106471, guid: d2e499f6b95a40ca8b82956501c5e558, type: 3}
+    weight: 0.6
+    minStage: 2
+  - prefab: {fileID: 3026763008540764443, guid: 46eb9a40c3ce4205be82afa3326b852a, type: 3}
+    weight: 0.6
+    minStage: 2
   monsterPrefab: {fileID: 523535490176711447, guid: cf3842ee94211234b943f2e47c76c121, type: 3}
+  bossPrefab: {fileID: 0}
+  bossEveryStages: 5
   mapData: {fileID: 11400000, guid: 7ba5c8ecad3bf0d4fb47a9ea98c7bb79, type: 2}
   playerExclusionRadius: 4
   maxSpawnAttempts: 10
