@@ -48,6 +48,7 @@ public class ShopManager : MonoBehaviour
     {
         public Button button;
         public Image bg;
+        public Image icon;
         public Text nameText;
         public Text priceText;
         public WeaponData weapon;
@@ -350,6 +351,8 @@ public class ShopManager : MonoBehaviour
         {
             if (c.bg != null) c.bg.color = RarityColor[0];
 
+            SetIcon(c, c.weapon.icon);
+
             string label = string.IsNullOrEmpty(c.weapon.weaponName) ? c.weapon.name : c.weapon.weaponName;
 
             c.nameText.text = label;
@@ -364,6 +367,8 @@ public class ShopManager : MonoBehaviour
         {
             if (c.bg != null) c.bg.color = RarityColor[Mathf.Clamp((int)c.item.rarity, 0, 2)];
 
+            SetIcon(c, c.item.icon);
+
             string label = string.IsNullOrEmpty(c.item.itemName) ? c.item.name : c.item.itemName;
 
             c.nameText.text = $"[{RarityName(c.item.rarity)}]\n{label}\n\n{EffectSummary(c.item)}";
@@ -376,11 +381,23 @@ public class ShopManager : MonoBehaviour
         // 빈 카드
         if (c.bg != null) c.bg.color = RarityColor[0];
 
+        SetIcon(c, null);
+
         bool poolsEmpty = (shopPool == null || shopPool.Count == 0) && (itemPool == null || itemPool.Count == 0);
 
         c.nameText.text = poolsEmpty ? "(풀 비었음)" : "-";
 
         c.priceText.text = "";
+    }
+
+    // 카드 아이콘 표시(스프라이트 없으면 숨김).
+    private void SetIcon(Card c, Sprite sprite)
+    {
+        if (c.icon == null) return;
+
+        c.icon.sprite = sprite;
+
+        c.icon.enabled = sprite != null;
     }
 
     private static string RarityName(ItemRarity r)
@@ -500,16 +517,23 @@ public class ShopManager : MonoBehaviour
         var button = img.gameObject.AddComponent<Button>();
         button.targetGraphic = img;
 
+        // 무기/아이템 아이콘(상단). 스프라이트가 없으면 UpdateCardVisual 에서 숨김.
+        var iconImg = CreateImage(img.transform, "Icon", Color.white);
+        Place(iconImg.rectTransform, new Vector2(0f, size.y * 0.5f - 80f), new Vector2(120f, 120f));
+        iconImg.raycastTarget = false;
+        iconImg.preserveAspect = true;
+        iconImg.enabled = false;
+
         // 이름/설명(멀티라인). 아이템은 [등급]\n이름\n\n효과 형태로 들어감.
-        var nameText = CreateText(img.transform, "Name", $"카드{number}", 28, font, TextAnchor.MiddleCenter);
-        Place(nameText.rectTransform, new Vector2(0f, 26f), new Vector2(size.x - 16f, 260f));
+        var nameText = CreateText(img.transform, "Name", $"카드{number}", 26, font, TextAnchor.UpperCenter);
+        Place(nameText.rectTransform, new Vector2(0f, -30f), new Vector2(size.x - 16f, 200f));
         nameText.color = Color.black;
 
         var priceText = CreateText(img.transform, "Price", "", 30, font, TextAnchor.MiddleCenter);
         Place(priceText.rectTransform, new Vector2(0f, -size.y * 0.5f + 40f), new Vector2(size.x - 20f, 60f));
         priceText.color = new Color(0.12f, 0.28f, 0.12f);
 
-        var card = new Card { button = button, bg = img, nameText = nameText, priceText = priceText };
+        var card = new Card { button = button, bg = img, icon = iconImg, nameText = nameText, priceText = priceText };
 
         button.onClick.AddListener(() => Buy(card));
 

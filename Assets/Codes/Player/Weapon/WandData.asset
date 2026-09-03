@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: WandData
   m_EditorClassIdentifier: Assembly-CSharp::WeaponData
   weaponName: 완드
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: a6cb6039222147a8a3b3993241697218, type: 3}
   weaponPrefab: {fileID: 2019112685273845732, guid: a095825dcd42401ea3a8fafb2f4f1d67, type: 3}
   weaponType: 1
   damage: 8

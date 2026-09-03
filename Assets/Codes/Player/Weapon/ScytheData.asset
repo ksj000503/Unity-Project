@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: ScytheData
   m_EditorClassIdentifier: Assembly-CSharp::WeaponData
   weaponName: 낫
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: f67a8a0d4145422e942fefa0cdc4f92e, type: 3}
   weaponPrefab: {fileID: 6366152617320153923, guid: 12a086a36ab148bb875ec5a1a3395d68, type: 3}
   weaponType: 0
   damage: 15

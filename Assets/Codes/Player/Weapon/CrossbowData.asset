@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: CrossbowData
   m_EditorClassIdentifier: Assembly-CSharp::WeaponData
   weaponName: 석궁
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: cf09afe064114310833dee4b6d932100, type: 3}
   weaponPrefab: {fileID: 1334156891092801961, guid: 897af1168ec04034a5e7b2bf461a13c6, type: 3}
   weaponType: 1
   damage: 12

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: DaggerData
   m_EditorClassIdentifier: Assembly-CSharp::WeaponData
   weaponName: 단검
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 7f98750fb6f5417c9592674881b7e6f0, type: 3}
   weaponPrefab: {fileID: 4396977502964455889, guid: 0fc8fce9d63843dabea0d9f2a672f66e, type: 3}
   weaponType: 0
   damage: 5

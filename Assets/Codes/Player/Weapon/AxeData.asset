@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: AxeData
   m_EditorClassIdentifier: Assembly-CSharp::WeaponData
   weaponName: 도끼
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 029863771c9f4574a98d099558dcca71, type: 3}
   weaponPrefab: {fileID: 7348748740855395523, guid: f5a04ade0d85440d94cacc85a6547a73, type: 3}
   weaponType: 0
   damage: 20

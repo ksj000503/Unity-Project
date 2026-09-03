@@ -17,6 +17,19 @@ public class WeaponSlotManager : MonoBehaviour
 
     private Weapon[] slots;
 
+    // 장착/레벨업 등 슬롯 구성이 바뀌면 발행. HUD 무기 아이콘 바가 구독해 갱신.
+    public event System.Action OnWeaponsChanged;
+
+    // HUD 가 슬롯을 훑기 위한 읽기 접근자.
+    public int SlotCount => slotCount;
+
+    public Weapon GetSlot(int index)
+    {
+        if (slots == null || index < 0 || index >= slots.Length) return null;
+
+        return slots[index];
+    }
+
     private void Awake()
     {
         slotCount = Mathf.Max(1, slotCount);
@@ -42,7 +55,7 @@ public class WeaponSlotManager : MonoBehaviour
     }
 
     // 무기 획득 진입점.
-    // 같은 무기(동일 WeaponData 참조)를 이미 장착 중이면 슬롯을 늘리지 않고 레벨업.
+    // 같은 무기(동일 WeaponData 참조)를 이미 장착 중이면 슬롯을 늘리지 않고 레벨업(최대 레벨이면 실패).
     // 아니면 1번 슬롯부터 차례로 빈 칸에 장착. 반환값 true = 장착 또는 레벨업 성공.
     public bool AddWeapon(WeaponData data)
     {
@@ -59,12 +72,21 @@ public class WeaponSlotManager : MonoBehaviour
             return false;
         }
 
-        // 중복 장비 → 레벨업 (슬롯이 가득 차 있어도 강화는 가능)
+        // 중복 장비 → 레벨업 (슬롯이 가득 차 있어도 강화는 가능). 단, 최대 레벨이면 실패 → 상점이 환불.
         Weapon existing = FindSlotWithData(data);
 
         if (existing != null)
         {
+            if (!existing.CanLevelUp)
+            {
+                Debug.Log($"[WeaponSlotManager] {data.name} 최대 레벨(Lv{existing.MaxLevel}) — 강화 불가.", this);
+
+                return false;
+            }
+
             existing.LevelUp();
+
+            OnWeaponsChanged?.Invoke();
 
             return true;
         }
@@ -94,6 +116,8 @@ public class WeaponSlotManager : MonoBehaviour
         weapon.Setup(data, enemyMask);
 
         slots[idx] = weapon;
+
+        OnWeaponsChanged?.Invoke();
 
         return true;
     }

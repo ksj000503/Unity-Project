@@ -23,6 +23,13 @@ public class Weapon : MonoBehaviour
     public LayerMask EnemyMask => enemyMask;
     public int Level => level;
 
+    // HUD 표시용. 무기 아이콘 스프라이트와 최대 레벨(레벨 칸 수).
+    public Sprite Icon => data != null ? data.icon : null;
+    public int MaxLevel => data != null ? Mathf.Max(1, data.maxLevel) : 1;
+
+    // 아직 강화 여지가 있는지(상한 미도달). 상점이 중복 구매 가능 여부로 사용.
+    public bool CanLevelUp => level < MaxLevel;
+
     // 레벨 반영 최종 수치. 원본 data 값은 기준값으로만 사용하고 절대 수정하지 않는다.
     // 데미지: 레벨당 +20%(가산 배수) × 아이템 데미지 배수. Lv1=기준, Lv2=+20% ...
     public int Damage
@@ -60,12 +67,12 @@ public class Weapon : MonoBehaviour
         InitBehavior();
     }
 
-    // 같은 무기를 다시 획득했을 때 슬롯을 늘리지 않고 강화. 수치는 매 공격 시 계산 프로퍼티로 즉시 반영됨.
+    // 같은 무기를 다시 획득했을 때 슬롯을 늘리지 않고 강화. 최대 레벨에서 더 오르지 않음(상한 클램프).
     public void LevelUp()
     {
-        level++;
+        level = Mathf.Min(level + 1, MaxLevel);
 
-        Debug.Log($"[Weapon] {(data != null ? data.name : name)} 레벨업 → Lv{level} (dmg {Damage}, pierce {PierceCount})", this);
+        Debug.Log($"[Weapon] {(data != null ? data.name : name)} 레벨업 → Lv{level}/{MaxLevel} (dmg {Damage}, pierce {PierceCount})", this);
     }
 
     private void Awake()

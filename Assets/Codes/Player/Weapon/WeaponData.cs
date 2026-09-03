@@ -41,6 +41,10 @@ public class WeaponData : ScriptableObject
     [Tooltip("다발 발사 시 부채꼴 전체 퍼짐 각도(도). 0 = 일직선")]
     public float spreadAngle = 0f;
 
+    [Header("성장")]
+    [Tooltip("이 무기의 최대 강화 레벨(레벨업 상한). HUD 레벨 칸 수의 기준")]
+    public int maxLevel = 5;
+
     [Header("상점")]
     [Tooltip("상점 구매 가격(임시 값, 인스펙터에서 조정)")]
     public int price = 10;

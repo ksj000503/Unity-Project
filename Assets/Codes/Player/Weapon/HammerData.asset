@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: HammerData
   m_EditorClassIdentifier: Assembly-CSharp::WeaponData
   weaponName: 해머
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 619bdc4d0d8d42ac8cb4069ce8600285, type: 3}
   weaponPrefab: {fileID: 1179495691801590643, guid: c8f44bb1b357424d9185ab7ecf837471, type: 3}
   weaponType: 0
   damage: 30

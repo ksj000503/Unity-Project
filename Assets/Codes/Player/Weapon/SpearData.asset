@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: SpearData
   m_EditorClassIdentifier: Assembly-CSharp::WeaponData
   weaponName: 창
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 89cfe154b36c4f188a8afd76bac3d80f, type: 3}
   weaponPrefab: {fileID: 3305230431745386267, guid: 7772ee6f0dcd4fbd825b65828233c2bc, type: 3}
   weaponType: 0
   damage: 12

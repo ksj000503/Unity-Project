@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: ShotgunData
   m_EditorClassIdentifier: Assembly-CSharp::WeaponData
   weaponName: 샷건
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 262396a9c232416f9d67ae8b4d2f12a8, type: 3}
   weaponPrefab: {fileID: 5011002341788559794, guid: 61293c48ffe64c54a16bb62f35ed4f4b, type: 3}
   weaponType: 1
   damage: 14

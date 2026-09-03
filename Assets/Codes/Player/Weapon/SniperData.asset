@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: SniperData
   m_EditorClassIdentifier: Assembly-CSharp::WeaponData
   weaponName: 저격총
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 7a26add0e10249619bea8414035e6d5a, type: 3}
   weaponPrefab: {fileID: 7665833408088912174, guid: 269d23261b5c44638213f09976a0507d, type: 3}
   weaponType: 1
   damage: 25
