@@ -244,7 +244,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WeaponInputHandler
   meleeWeapon: {fileID: 11400000, guid: 35656f6504be11547aba5cafbc4f9203, type: 2}
-  rangedWeapon: {fileID: 0}
+  rangedWeapon: {fileID: 11400000, guid: eb2f2618370b436c98886e9f1d4807bd, type: 2}
 --- !u!114 &511900109
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -301,9 +301,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cc039c55fb1e01841bbaf7d8607fcfea, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerStats
-  attackPower: 1
-  attackSpeed: 1
-  moveSpeed: 5
+  damageBonusPercent: 0
+  cooldownReductionPercent: 0
+  luck: 0
   maxHp: 100
 --- !u!1 &519420028
 GameObject:
@@ -560,6 +560,9 @@ MonoBehaviour:
   playerStats: {fileID: 0}
   shopPool:
   - {fileID: 11400000, guid: 35656f6504be11547aba5cafbc4f9203, type: 2}
+  - {fileID: 11400000, guid: eb2f2618370b436c98886e9f1d4807bd, type: 2}
+  itemPool: []
+  itemChance: 0.4
   rerollCost: 5
   offerCount: 3
   uiFont: {fileID: 0}
@@ -708,10 +711,7 @@ MonoBehaviour:
   - prefab: {fileID: 4238661196570106471, guid: d2e499f6b95a40ca8b82956501c5e558, type: 3}
     weight: 0.6
     minStage: 2
-  - prefab: {fileID: 3026763008540764443, guid: 46eb9a40c3ce4205be82afa3326b852a, type: 3}
-    weight: 0.6
-    minStage: 2
-  monsterPrefab: {fileID: 523535490176711447, guid: cf3842ee94211234b943f2e47c76c121, type: 3}
+  monsterPrefab: {fileID: 3026763008540764443, guid: 46eb9a40c3ce4205be82afa3326b852a, type: 3}
   bossPrefab: {fileID: 0}
   bossEveryStages: 5
   mapData: {fileID: 11400000, guid: 7ba5c8ecad3bf0d4fb47a9ea98c7bb79, type: 2}
@@ -821,7 +821,7 @@ Transform:
   m_GameObject: {fileID: 1868074004}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.0015999, y: -1.0686, z: 0}
+  m_LocalPosition: {x: -0.04, y: -0.99, z: 0}
   m_LocalScale: {x: 2.575, y: 2, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

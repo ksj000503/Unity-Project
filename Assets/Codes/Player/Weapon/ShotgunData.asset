@@ -23,4 +23,6 @@ MonoBehaviour:
   spinRadius: 1
   projectilePrefab: {fileID: 4736016299012837261, guid: b1316e0d3d804220ae0ad9dc02f1cad7, type: 3}
   pierceCount: 0
+  projectileCount: 5
+  spreadAngle: 30
   price: 16

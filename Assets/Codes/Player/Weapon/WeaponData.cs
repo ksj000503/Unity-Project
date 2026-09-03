@@ -36,6 +36,10 @@ public class WeaponData : ScriptableObject
     public GameObject projectilePrefab;
     [Tooltip("추가 관통 수. 0 = 단일 타격, N = 적 N명 더 관통")]
     public int pierceCount = 0;
+    [Tooltip("한 번에 발사할 투사체 수(샷건 등 다발). 1 = 단발")]
+    public int projectileCount = 1;
+    [Tooltip("다발 발사 시 부채꼴 전체 퍼짐 각도(도). 0 = 일직선")]
+    public float spreadAngle = 0f;
 
     [Header("상점")]
     [Tooltip("상점 구매 가격(임시 값, 인스펙터에서 조정)")]

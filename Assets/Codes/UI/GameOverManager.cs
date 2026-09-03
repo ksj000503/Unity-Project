@@ -5,12 +5,15 @@ using UnityEngine.InputSystem.UI;
 using UnityEngine.SceneManagement;
 
 // 플레이어 사망 → 게임오버. 플레이어 Health.OnDied 구독 → 일시정지 + 게임오버 패널.
-// "다시 시작" = 현재 씬 리로드(완전 초기화). UI는 런타임 자가 생성.
+// "다시 시작" = 현재 씬 리로드(완전 초기화), "로비로" = 메인메뉴 씬 로드. UI는 런타임 자가 생성.
 // 플레이어 Health 는 destroyOnDeath=false 여야 파괴되지 않고 여기로 넘어온다.
 public class GameOverManager : MonoBehaviour
 {
     [Header("참조 (비우면 Player 태그에서 탐색)")]
     [SerializeField] private Health playerHealth;
+
+    [Header("씬 이름")]
+    [SerializeField] private string lobbySceneName = "MainMenu";
 
     [Header("UI (선택)")]
     [SerializeField] private Font uiFont;
@@ -69,6 +72,16 @@ public class GameOverManager : MonoBehaviour
         SceneManager.LoadScene(scene.buildIndex);
     }
 
+    private void GoToLobby()
+    {
+        Time.timeScale = 1f;
+
+        // 로비로 돌아가면 이전에 고른 시작 무기 선택을 비워 다음 판에서 다시 고르게 함.
+        GameConfig.StartingWeapon = null;
+
+        SceneManager.LoadScene(lobbySceneName);
+    }
+
     private void SetVisible(bool on)
     {
         if (root != null) root.SetActive(on);
@@ -101,11 +114,14 @@ public class GameOverManager : MonoBehaviour
         dim.raycastTarget = true;
 
         var title = CreateText(root.transform, "Title", "게임 오버", 90, font, TextAnchor.MiddleCenter);
-        Place(title.rectTransform, new Vector2(0f, 80f), new Vector2(800f, 140f));
+        Place(title.rectTransform, new Vector2(0f, 90f), new Vector2(800f, 140f));
         title.color = new Color(0.95f, 0.3f, 0.3f);
 
-        Button restart = CreateButton(root.transform, font, "다시 시작", new Vector2(0f, -80f), new Vector2(280f, 90f));
+        Button restart = CreateButton(root.transform, font, "다시 시작", new Vector2(-160f, -90f), new Vector2(280f, 90f), new Color(0.2f, 0.45f, 0.85f, 1f));
         restart.onClick.AddListener(Restart);
+
+        Button lobby = CreateButton(root.transform, font, "로비로", new Vector2(160f, -90f), new Vector2(280f, 90f), new Color(0.35f, 0.35f, 0.4f, 1f));
+        lobby.onClick.AddListener(GoToLobby);
     }
 
     private void EnsureEventSystem()
@@ -128,6 +144,8 @@ public class GameOverManager : MonoBehaviour
         Font f = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
 
         if (f == null) f = Resources.GetBuiltinResource<Font>("Arial.ttf");
+
+        if (f == null) f = Font.CreateDynamicFontFromOSFont(new[] { "Malgun Gothic", "Arial", "돋움" }, 16);
 
         return f;
     }
@@ -161,9 +179,9 @@ public class GameOverManager : MonoBehaviour
         return t;
     }
 
-    private Button CreateButton(Transform parent, Font font, string label, Vector2 pos, Vector2 size)
+    private Button CreateButton(Transform parent, Font font, string label, Vector2 pos, Vector2 size, Color color)
     {
-        var img = CreateImage(parent, "Button", new Color(0.2f, 0.45f, 0.85f, 1f));
+        var img = CreateImage(parent, "Button", color);
         Place(img.rectTransform, pos, size);
 
         var button = img.gameObject.AddComponent<Button>();

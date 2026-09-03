@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b2d4f6180c3a5e7d9f1b2c3d4e5f6071, type: 3}
+  m_Name: LobbyConfig
+  m_EditorClassIdentifier: Assembly-CSharp::LobbyConfig
+  titleTexture: {fileID: 2800000, guid: e8d2ac87238e2074a8222bb31d2b5a53, type: 3}
+  startSprite: {fileID: 3957877770281677071, guid: 2c1dab31713392841b87950df0dea95f, type: 3}
+  quitSprite: {fileID: 916577628950400133, guid: 10e27569a6e96d54a8b1c23d7eb9bbfa, type: 3}
+  startingWeapons:
+  - {fileID: 11400000, guid: 64eb83c662de41d091f8891c53b7fb34, type: 2}
+  - {fileID: 11400000, guid: 1fb677db543545fb9d656ca02836679a, type: 2}
+  - {fileID: 11400000, guid: 1458be42e5cc41e2bbc4da1ea51b8ec4, type: 2}
+  - {fileID: 11400000, guid: 2076ae05ce1e487d96f5a7e292a74646, type: 2}
+  - {fileID: 11400000, guid: b1d38be7cfbc48c9bc18d3a7fa0186a2, type: 2}
+  - {fileID: 11400000, guid: 648600213ade4bdc8e517080e0c61516, type: 2}
