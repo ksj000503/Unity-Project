@@ -41,6 +41,16 @@ public class Health : MonoBehaviour, IDamageable
         OnHealthChanged?.Invoke(currentHp, maxHp);
     }
 
+    // 최대 HP 를 delta 만큼 늘리고 현재 HP 도 같이 회복(아이템 HP+ 구매용). 풀피로 리셋하지 않음.
+    public void AddMax(int delta)
+    {
+        maxHp = Mathf.Max(1, maxHp + delta);
+
+        currentHp = Mathf.Min(maxHp, currentHp + Mathf.Max(0, delta));
+
+        OnHealthChanged?.Invoke(currentHp, maxHp);
+    }
+
     public int MaxHp()
     {
         return maxHp;

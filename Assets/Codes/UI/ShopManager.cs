@@ -6,7 +6,7 @@ using UnityEngine.InputSystem.UI;
 
 // 라운드(웨이브) 종료 시 뜨는 상점. StageManager.OnWaveCleared 로 열리고, 게임을 일시정지한다.
 // UI(캔버스/카드/버튼)를 런타임에 스스로 생성 → 에디터에서 Canvas 조립 불필요.
-// 레이아웃: 골드(상단) / 무기1·2·3(구매 카드) / 현재 스탯(우측) / 돌리기·다음 라운드(하단).
+// 카드는 무기 또는 아이템(혼합). 아이템은 행운 가중치로 등급을 뽑고 구매 시 PlayerStats 에 효과 적용.
 public class ShopManager : MonoBehaviour
 {
     [Header("참조 (비우면 Player 태그에서 탐색)")]
@@ -15,8 +15,15 @@ public class ShopManager : MonoBehaviour
     [SerializeField] private PlayerStats playerStats;
 
     [Header("상점 데이터")]
-    [Tooltip("구매 후보 무기 풀(무기1·2·3 은 여기서 무작위 추첨)")]
+    [Tooltip("구매 후보 무기 풀")]
     [SerializeField] private List<WeaponData> shopPool = new List<WeaponData>();
+
+    [Tooltip("구매 후보 아이템 풀(등급별로 여러 개 넣으면 행운 뽑기가 반영됨)")]
+    [SerializeField] private List<ItemData> itemPool = new List<ItemData>();
+
+    [Tooltip("각 카드가 아이템으로 나올 확률(0~1). 나머지는 무기")]
+    [Range(0f, 1f)]
+    [SerializeField] private float itemChance = 0.4f;
 
     [Tooltip("돌리기(리롤) 비용 — 임시 값")]
     [SerializeField] private int rerollCost = 5;
@@ -28,13 +35,23 @@ public class ShopManager : MonoBehaviour
     [Tooltip("비우면 내장 폰트 사용")]
     [SerializeField] private Font uiFont;
 
-    // 카드 하나의 런타임 상태.
+    // 등급 카드 배경색: Normal=회색, Epic=보라, Unique=금색.
+    private static readonly Color[] RarityColor =
+    {
+        new Color(0.85f, 0.85f, 0.85f, 1f),
+        new Color(0.74f, 0.56f, 0.96f, 1f),
+        new Color(0.98f, 0.82f, 0.35f, 1f),
+    };
+
+    // 카드 하나의 런타임 상태. weapon 또는 item 중 하나만 채워짐.
     private class Card
     {
         public Button button;
+        public Image bg;
         public Text nameText;
         public Text priceText;
         public WeaponData weapon;
+        public ItemData item;
         public bool sold;
     }
 
@@ -135,36 +152,28 @@ public class ShopManager : MonoBehaviour
 
     private void RollOffers()
     {
-        // 풀을 섞어 카드마다 최대한 겹치지 않게 배정.
-        // 풀이 카드 수보다 적으면(예: 2종·3카드) 앞 카드들은 서로 다른 무기로 채우고
-        // 남는 카드만 무작위 반복 → 매 상점마다 보유 무기 종류가 최소 한 번씩은 노출됨.
-        List<WeaponData> bag = null;
-
-        if (shopPool != null && shopPool.Count > 0)
-        {
-            bag = new List<WeaponData>(shopPool);
-
-            for (int i = bag.Count - 1; i > 0; i--) // Fisher-Yates 셔플
-            {
-                int j = Random.Range(0, i + 1);
-
-                WeaponData tmp = bag[i];
-                bag[i] = bag[j];
-                bag[j] = tmp;
-            }
-        }
+        bool canWeapon = shopPool != null && shopPool.Count > 0;
+        bool canItem = itemPool != null && itemPool.Count > 0;
 
         for (int i = 0; i < cards.Count; i++)
         {
             Card c = cards[i];
 
-            if (bag != null && bag.Count > 0)
+            c.weapon = null;
+            c.item = null;
+
+            bool asItem;
+
+            if (canItem && canWeapon) asItem = Random.value < itemChance;
+            else asItem = canItem && !canWeapon;
+
+            if (asItem)
             {
-                c.weapon = (i < bag.Count) ? bag[i] : bag[Random.Range(0, bag.Count)];
+                c.item = RollItem();
             }
-            else
+            else if (canWeapon)
             {
-                c.weapon = null;
+                c.weapon = shopPool[Random.Range(0, shopPool.Count)];
             }
 
             c.sold = false;
@@ -175,33 +184,124 @@ public class ShopManager : MonoBehaviour
         UpdateInteractable();
     }
 
-    private void Buy(Card c)
+    // 행운 가중치로 등급을 뽑고, 해당 등급 아이템 중 하나를 무작위 선택.
+    private ItemData RollItem()
     {
-        if (!isOpen || c.sold || c.weapon == null || wallet == null || slotManager == null) return;
+        if (itemPool == null || itemPool.Count == 0) return null;
 
-        int price = Mathf.Max(0, c.weapon.price);
+        int luck = (playerStats != null) ? playerStats.Luck : 0;
 
-        if (wallet.Coins < price) return;
+        float wN = HasRarity(ItemRarity.Normal) ? 70f : 0f;
+        float wE = HasRarity(ItemRarity.Epic) ? 25f + luck * 2f : 0f;
+        float wU = HasRarity(ItemRarity.Unique) ? 5f + luck : 0f;
 
-        if (!wallet.TrySpend(price)) return;
+        float total = wN + wE + wU;
 
-        // 6슬롯 만석 + 신규 무기면 AddWeapon 실패 → 환불.
-        bool ok = slotManager.AddWeapon(c.weapon);
+        ItemRarity chosen = ItemRarity.Normal;
 
-        if (!ok)
+        if (total > 0f)
         {
-            wallet.Add(price);
+            float r = Random.value * total;
 
-            return;
+            if (r < wN) chosen = ItemRarity.Normal;
+            else if (r < wN + wE) chosen = ItemRarity.Epic;
+            else chosen = ItemRarity.Unique;
         }
 
-        c.sold = true;
+        List<ItemData> pick = new List<ItemData>();
+
+        foreach (var it in itemPool)
+        {
+            if (it != null && it.rarity == chosen) pick.Add(it);
+        }
+
+        if (pick.Count == 0) // 해당 등급이 풀에 없으면 전체에서
+        {
+            foreach (var it in itemPool) if (it != null) pick.Add(it);
+        }
+
+        return pick.Count > 0 ? pick[Random.Range(0, pick.Count)] : null;
+    }
+
+    private bool HasRarity(ItemRarity r)
+    {
+        foreach (var it in itemPool) if (it != null && it.rarity == r) return true;
+
+        return false;
+    }
+
+    private void Buy(Card c)
+    {
+        if (!isOpen || c.sold || wallet == null) return;
+
+        if (c.weapon != null)
+        {
+            if (slotManager == null) return;
+
+            int price = Mathf.Max(0, c.weapon.price);
+
+            if (wallet.Coins < price) return;
+
+            if (!wallet.TrySpend(price)) return;
+
+            // 6슬롯 만석 + 신규 무기면 AddWeapon 실패 → 환불.
+            bool ok = slotManager.AddWeapon(c.weapon);
+
+            if (!ok)
+            {
+                wallet.Add(price);
+
+                return;
+            }
+
+            c.sold = true;
+        }
+        else if (c.item != null)
+        {
+            int price = Mathf.Max(0, c.item.price);
+
+            if (wallet.Coins < price) return;
+
+            if (!wallet.TrySpend(price)) return;
+
+            ApplyItem(c.item);
+
+            c.sold = true;
+        }
+        else
+        {
+            return;
+        }
 
         UpdateCardVisual(c);
 
         RefreshStats();
 
         UpdateInteractable();
+    }
+
+    // 아이템 효과를 PlayerStats 에 적용.
+    private void ApplyItem(ItemData it)
+    {
+        if (playerStats == null || it == null)
+        {
+            Debug.LogWarning("[ShopManager] PlayerStats/ItemData 없음 — 아이템 효과 미적용.", this);
+
+            return;
+        }
+
+        if (it.effects == null) return;
+
+        foreach (var e in it.effects)
+        {
+            switch (e.stat)
+            {
+                case PlayerStatType.DamageUp: playerStats.AddDamagePercent(e.amount); break;
+                case PlayerStatType.CooldownDown: playerStats.AddCooldownReduction(e.amount); break;
+                case PlayerStatType.MaxHpUp: playerStats.AddMaxHp(Mathf.RoundToInt(e.amount)); break;
+                case PlayerStatType.LuckUp: playerStats.AddLuck(Mathf.RoundToInt(e.amount)); break;
+            }
+        }
     }
 
     private void Reroll()
@@ -245,19 +345,72 @@ public class ShopManager : MonoBehaviour
 
     private void UpdateCardVisual(Card c)
     {
-        if (c.weapon == null)
+        // 무기 카드
+        if (c.weapon != null)
         {
-            c.nameText.text = (shopPool == null || shopPool.Count == 0) ? "(무기 풀 비었음)" : "-";
-            c.priceText.text = "";
+            if (c.bg != null) c.bg.color = RarityColor[0];
+
+            string label = string.IsNullOrEmpty(c.weapon.weaponName) ? c.weapon.name : c.weapon.weaponName;
+
+            c.nameText.text = label;
+
+            c.priceText.text = c.sold ? "판매완료" : $"{Mathf.Max(0, c.weapon.price)} G";
 
             return;
         }
 
-        string label = string.IsNullOrEmpty(c.weapon.weaponName) ? c.weapon.name : c.weapon.weaponName;
+        // 아이템 카드
+        if (c.item != null)
+        {
+            if (c.bg != null) c.bg.color = RarityColor[Mathf.Clamp((int)c.item.rarity, 0, 2)];
 
-        c.nameText.text = label;
+            string label = string.IsNullOrEmpty(c.item.itemName) ? c.item.name : c.item.itemName;
 
-        c.priceText.text = c.sold ? "판매완료" : $"{Mathf.Max(0, c.weapon.price)} G";
+            c.nameText.text = $"[{RarityName(c.item.rarity)}]\n{label}\n\n{EffectSummary(c.item)}";
+
+            c.priceText.text = c.sold ? "판매완료" : $"{Mathf.Max(0, c.item.price)} G";
+
+            return;
+        }
+
+        // 빈 카드
+        if (c.bg != null) c.bg.color = RarityColor[0];
+
+        bool poolsEmpty = (shopPool == null || shopPool.Count == 0) && (itemPool == null || itemPool.Count == 0);
+
+        c.nameText.text = poolsEmpty ? "(풀 비었음)" : "-";
+
+        c.priceText.text = "";
+    }
+
+    private static string RarityName(ItemRarity r)
+    {
+        switch (r)
+        {
+            case ItemRarity.Epic: return "에픽";
+            case ItemRarity.Unique: return "유니크";
+            default: return "노말";
+        }
+    }
+
+    private static string EffectSummary(ItemData it)
+    {
+        if (it.effects == null || it.effects.Count == 0) return "";
+
+        List<string> lines = new List<string>();
+
+        foreach (var e in it.effects)
+        {
+            switch (e.stat)
+            {
+                case PlayerStatType.DamageUp: lines.Add($"데미지 +{e.amount:0.#}%"); break;
+                case PlayerStatType.CooldownDown: lines.Add($"쿨감 {e.amount:0.#}%"); break;
+                case PlayerStatType.MaxHpUp: lines.Add($"HP +{e.amount:0}"); break;
+                case PlayerStatType.LuckUp: lines.Add($"행운 +{e.amount:0}"); break;
+            }
+        }
+
+        return string.Join("\n", lines);
     }
 
     private void UpdateInteractable()
@@ -266,7 +419,11 @@ public class ShopManager : MonoBehaviour
 
         foreach (var c in cards)
         {
-            bool buyable = !c.sold && c.weapon != null && coins >= Mathf.Max(0, c.weapon.price);
+            int price = c.weapon != null ? c.weapon.price : (c.item != null ? c.item.price : int.MaxValue);
+
+            bool hasOffer = c.weapon != null || c.item != null;
+
+            bool buyable = !c.sold && hasOffer && coins >= Mathf.Max(0, price);
 
             if (c.button != null) c.button.interactable = buyable;
         }
@@ -301,11 +458,11 @@ public class ShopManager : MonoBehaviour
         Stretch(dim.rectTransform);
         dim.raycastTarget = true;
 
-        // 골드(상단 중앙, 무기2 위).
+        // 골드(상단 중앙).
         goldText = CreateText(root.transform, "Gold", "골드  0", 40, font, TextAnchor.MiddleCenter);
         Place(goldText.rectTransform, new Vector2(-330f, 230f), new Vector2(240f, 70f));
 
-        // 무기 카드 3장.
+        // 카드 3장.
         float[] xs = { -600f, -330f, -60f };
 
         int count = Mathf.Max(1, offerCount); // 직렬화 값이 0이어도 최소 1장은 생성(카드 미표시 방지)
@@ -337,21 +494,22 @@ public class ShopManager : MonoBehaviour
 
     private Card CreateCard(Transform parent, Font font, Vector2 pos, Vector2 size, int number)
     {
-        var img = CreateImage(parent, $"Weapon{number}", new Color(0.85f, 0.85f, 0.85f, 1f));
+        var img = CreateImage(parent, $"Card{number}", RarityColor[0]);
         Place(img.rectTransform, pos, size);
 
         var button = img.gameObject.AddComponent<Button>();
         button.targetGraphic = img;
 
-        var nameText = CreateText(img.transform, "Name", $"무기{number}", 34, font, TextAnchor.MiddleCenter);
-        Place(nameText.rectTransform, new Vector2(0f, 20f), new Vector2(size.x - 20f, 80f));
+        // 이름/설명(멀티라인). 아이템은 [등급]\n이름\n\n효과 형태로 들어감.
+        var nameText = CreateText(img.transform, "Name", $"카드{number}", 28, font, TextAnchor.MiddleCenter);
+        Place(nameText.rectTransform, new Vector2(0f, 26f), new Vector2(size.x - 16f, 260f));
         nameText.color = Color.black;
 
         var priceText = CreateText(img.transform, "Price", "", 30, font, TextAnchor.MiddleCenter);
         Place(priceText.rectTransform, new Vector2(0f, -size.y * 0.5f + 40f), new Vector2(size.x - 20f, 60f));
-        priceText.color = new Color(0.15f, 0.35f, 0.15f);
+        priceText.color = new Color(0.12f, 0.28f, 0.12f);
 
-        var card = new Card { button = button, nameText = nameText, priceText = priceText };
+        var card = new Card { button = button, bg = img, nameText = nameText, priceText = priceText };
 
         button.onClick.AddListener(() => Buy(card));
 
@@ -412,7 +570,7 @@ public class ShopManager : MonoBehaviour
         t.fontSize = fontSize;
         t.alignment = anchor;
         t.color = Color.white;
-        t.horizontalOverflow = HorizontalWrapMode.Overflow;
+        t.horizontalOverflow = HorizontalWrapMode.Wrap;
         t.verticalOverflow = VerticalWrapMode.Overflow;
         t.raycastTarget = false;
 

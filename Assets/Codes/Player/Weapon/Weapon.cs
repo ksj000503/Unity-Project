@@ -16,19 +16,23 @@ public class Weapon : MonoBehaviour
     // 무기 레벨(런타임 인스턴스 값). SO(WeaponData)는 공유 에셋이라 오염 금지 → 여기서만 관리.
     private int level = 1;
 
+    // 플레이어 강화 스탯(아이템). 부모(Player)에서 참조. 없으면 배수 1(무보정).
+    private PlayerStats stats;
+
     public WeaponData Data => data;
     public LayerMask EnemyMask => enemyMask;
     public int Level => level;
 
     // 레벨 반영 최종 수치. 원본 data 값은 기준값으로만 사용하고 절대 수정하지 않는다.
-    // 데미지: 레벨당 +20%(가산 배수). Lv1=기준, Lv2=+20%, Lv3=+40% ...
+    // 데미지: 레벨당 +20%(가산 배수) × 아이템 데미지 배수. Lv1=기준, Lv2=+20% ...
     public int Damage
     {
         get
         {
             if (data == null) return 0;
             float scaled = data.damage * (1f + 0.2f * (level - 1));
-            return Mathf.RoundToInt(scaled);
+            float itemMult = (stats != null) ? stats.DamageMultiplier : 1f;
+            return Mathf.RoundToInt(scaled * itemMult);
         }
     }
 
@@ -51,6 +55,8 @@ public class Weapon : MonoBehaviour
 
         enabled = true;
 
+        if (stats == null) stats = GetComponentInParent<PlayerStats>();
+
         InitBehavior();
     }
 
@@ -64,6 +70,8 @@ public class Weapon : MonoBehaviour
 
     private void Awake()
     {
+        if (stats == null) stats = GetComponentInParent<PlayerStats>();
+
         if (data != null) InitBehavior();
     }
 
@@ -123,7 +131,10 @@ public class Weapon : MonoBehaviour
 
         yield return behavior.Execute(target);
 
-        cooldownTimer = Mathf.Max(0.01f, data.attackCooldown);
+        // 아이템 쿨감 배수 반영. 하한 0.05 로 0 방지.
+        float cdMult = (stats != null) ? stats.CooldownMultiplier : 1f;
+
+        cooldownTimer = Mathf.Max(0.05f, data.attackCooldown * cdMult);
 
         isAttacking = false;
     }
