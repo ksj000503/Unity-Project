@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e5f60718293a4b5c6d7e8f90a1b2c3d, type: 3}
+  m_Name: ShopCatalog
+  m_EditorClassIdentifier: Assembly-CSharp::ShopCatalog
+  weapons:
+  - {fileID: 11400000, guid: 64eb83c662de41d091f8891c53b7fb34, type: 2}
+  - {fileID: 11400000, guid: 1fb677db543545fb9d656ca02836679a, type: 2}
+  - {fileID: 11400000, guid: 1458be42e5cc41e2bbc4da1ea51b8ec4, type: 2}
+  - {fileID: 11400000, guid: 71d5e52c4afd4176ae3608ff62b73646, type: 2}
+  - {fileID: 11400000, guid: cade026a1a3b419490f2b9def3a0fc33, type: 2}
+  - {fileID: 11400000, guid: 2076ae05ce1e487d96f5a7e292a74646, type: 2}
+  - {fileID: 11400000, guid: b1d38be7cfbc48c9bc18d3a7fa0186a2, type: 2}
+  - {fileID: 11400000, guid: 1b261e5aaba246a7ae0d1e53ebb5747f, type: 2}
+  - {fileID: 11400000, guid: 648600213ade4bdc8e517080e0c61516, type: 2}
+  - {fileID: 11400000, guid: 6602dedef81f4cc886056300e05ae13b, type: 2}
+  items:
+  - {fileID: 11400000, guid: f583cf0a346e40d69dcf0a6645edaf0f, type: 2}
+  - {fileID: 11400000, guid: 08a519916a33423cb578f54da3e66615, type: 2}
+  - {fileID: 11400000, guid: f39b78d363ae4e339f8c3e625e0a70f1, type: 2}
+  - {fileID: 11400000, guid: 4cc665789eef43ee97c48aa24cddbcd6, type: 2}
+  - {fileID: 11400000, guid: 53fa8e1968f64c68aa618b88a46fc779, type: 2}
+  - {fileID: 11400000, guid: eb33b3950a0d4ba8b3bd2968ee6b1ac5, type: 2}
+  - {fileID: 11400000, guid: 0990cd0e421b4a9b93b5ca8e659aa033, type: 2}
+  - {fileID: 11400000, guid: 04c97833581d4d2fb2d91eebaf67b3d5, type: 2}
+  - {fileID: 11400000, guid: c899cd4186f84d5aa6dbaacd46d160cf, type: 2}
+  - {fileID: 11400000, guid: 2c79c7d8d8604091811ac136addd73cf, type: 2}
+  - {fileID: 11400000, guid: fd04d2444fdd4437aea0652555cfeab2, type: 2}
+  - {fileID: 11400000, guid: b82417cbc4564f63b966e1846705257c, type: 2}

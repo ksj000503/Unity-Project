@@ -21,6 +21,9 @@ public class ShopManager : MonoBehaviour
     [Tooltip("구매 후보 아이템 풀(등급별로 여러 개 넣으면 행운 뽑기가 반영됨)")]
     [SerializeField] private List<ItemData> itemPool = new List<ItemData>();
 
+    [Tooltip("무기·아이템 전체 목록. 비우면 Resources/ShopCatalog 자동 로드. 위 풀과 합쳐지고 중복은 제외")]
+    [SerializeField] private ShopCatalog catalog;
+
     [Tooltip("각 카드가 아이템으로 나올 확률(0~1). 나머지는 무기")]
     [Range(0f, 1f)]
     [SerializeField] private float itemChance = 0.4f;
@@ -70,9 +73,39 @@ public class ShopManager : MonoBehaviour
     {
         ResolveRefs();
 
+        LoadCatalog();
+
         BuildUI();
 
         SetVisible(false);
+    }
+
+    // 카탈로그(Resources/ShopCatalog)를 읽어 풀을 채운다. 인스펙터로 넣은 항목은 유지하고 중복은 제외.
+    private void LoadCatalog()
+    {
+        if (catalog == null) catalog = Resources.Load<ShopCatalog>("ShopCatalog");
+
+        if (catalog == null) return;
+
+        if (shopPool == null) shopPool = new List<WeaponData>();
+
+        if (catalog.weapons != null)
+        {
+            foreach (var w in catalog.weapons)
+            {
+                if (w != null && !shopPool.Contains(w)) shopPool.Add(w);
+            }
+        }
+
+        if (itemPool == null) itemPool = new List<ItemData>();
+
+        if (catalog.items != null)
+        {
+            foreach (var it in catalog.items)
+            {
+                if (it != null && !itemPool.Contains(it)) itemPool.Add(it);
+            }
+        }
     }
 
     private void Start()
