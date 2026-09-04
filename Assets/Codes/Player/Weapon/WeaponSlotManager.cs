@@ -30,6 +30,14 @@ public class WeaponSlotManager : MonoBehaviour
         return slots[index];
     }
 
+    // 이 무기를 지금 몇 레벨로 장착 중인지(미보유면 0). 상점이 "다음 레벨" 카드를 만들 때 사용.
+    public int LevelOf(WeaponData data)
+    {
+        Weapon w = FindSlotWithData(data);
+
+        return w != null ? w.Level : 0;
+    }
+
     private void Awake()
     {
         slotCount = Mathf.Max(1, slotCount);

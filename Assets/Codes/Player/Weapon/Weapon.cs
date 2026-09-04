@@ -31,7 +31,7 @@ public class Weapon : MonoBehaviour
     public bool CanLevelUp => level < MaxLevel;
 
     // 레벨 반영 최종 수치. 원본 data 값은 기준값으로만 사용하고 절대 수정하지 않는다.
-    // 데미지: 레벨당 +20%(가산 배수) × 아이템 데미지 배수. Lv1=기준, Lv2=+20% ...
+    // 데미지: 레벨당 +20%(가산 배수) × 아이템 데미지 배수 × 타입별 세트 배수. Lv1=기준, Lv2=+20% ...
     public int Damage
     {
         get
@@ -39,7 +39,10 @@ public class Weapon : MonoBehaviour
             if (data == null) return 0;
             float scaled = data.damage * (1f + 0.2f * (level - 1));
             float itemMult = (stats != null) ? stats.DamageMultiplier : 1f;
-            return Mathf.RoundToInt(scaled * itemMult);
+            float setMult = 1f;
+            if (stats != null)
+                setMult = (data.weaponType == WeaponType.RangedShoot) ? stats.RangedSetMultiplier : stats.MeleeSetMultiplier;
+            return Mathf.RoundToInt(scaled * itemMult * setMult);
         }
     }
 

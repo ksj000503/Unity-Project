@@ -207,7 +207,10 @@ public class ShopManager : MonoBehaviour
             }
             else if (canWeapon)
             {
-                c.weapon = shopPool[Random.Range(0, shopPool.Count)];
+                c.weapon = RollWeapon();
+
+                // 살 수 있는 무기가 전부 만렙이면 아이템으로 대체(빈 카드 방지).
+                if (c.weapon == null && canItem) c.item = RollItem();
             }
 
             c.sold = false;
@@ -216,6 +219,27 @@ public class ShopManager : MonoBehaviour
         }
 
         UpdateInteractable();
+    }
+
+    // 만렙 아닌 무기 중 무작위 선택(미보유=0레벨 포함). 전부 만렙이면 null.
+    private WeaponData RollWeapon()
+    {
+        if (shopPool == null || shopPool.Count == 0) return null;
+
+        List<WeaponData> cand = new List<WeaponData>();
+
+        foreach (var w in shopPool)
+        {
+            if (w == null) continue;
+
+            int cur = slotManager != null ? slotManager.LevelOf(w) : 0;
+
+            if (cur < Mathf.Max(1, w.maxLevel)) cand.Add(w);
+        }
+
+        if (cand.Count == 0) return null;
+
+        return cand[Random.Range(0, cand.Count)];
     }
 
     // 행운 가중치로 등급을 뽑고, 해당 등급 아이템 중 하나를 무작위 선택.
@@ -307,7 +331,8 @@ public class ShopManager : MonoBehaviour
             return;
         }
 
-        UpdateCardVisual(c);
+        // 무기 레벨이 바뀌면 같은 무기를 든 다른 카드의 "다음 레벨" 표시도 갱신되도록 전체 리프레시.
+        foreach (var card in cards) UpdateCardVisual(card);
 
         RefreshStats();
 
@@ -386,9 +411,16 @@ public class ShopManager : MonoBehaviour
 
             SetIcon(c, c.weapon.icon);
 
-            string label = string.IsNullOrEmpty(c.weapon.weaponName) ? c.weapon.name : c.weapon.weaponName;
+            string nm = string.IsNullOrEmpty(c.weapon.weaponName) ? c.weapon.name : c.weapon.weaponName;
 
-            c.nameText.text = label;
+            // 보유 레벨 기준으로 "다음 레벨" 을 카드에 표시. 미보유=신규 Lv1, 보유=강화 Lv(현재+1).
+            int cur = slotManager != null ? slotManager.LevelOf(c.weapon) : 0;
+
+            int max = Mathf.Max(1, c.weapon.maxLevel);
+
+            string lvTag = cur >= max ? "MAX" : (cur == 0 ? "Lv1 (신규)" : $"Lv{cur + 1} (강화)");
+
+            c.nameText.text = $"{nm}\n{lvTag}";
 
             c.priceText.text = c.sold ? "판매완료" : $"{Mathf.Max(0, c.weapon.price)} G";
 
@@ -473,7 +505,11 @@ public class ShopManager : MonoBehaviour
 
             bool hasOffer = c.weapon != null || c.item != null;
 
-            bool buyable = !c.sold && hasOffer && coins >= Mathf.Max(0, price);
+            // 이미 만렙인 무기는 구매 불가(방어적: RollWeapon 이 걸러주지만 리롤 사이 상태 대비).
+            bool maxed = c.weapon != null && slotManager != null &&
+                         slotManager.LevelOf(c.weapon) >= Mathf.Max(1, c.weapon.maxLevel);
+
+            bool buyable = !c.sold && hasOffer && !maxed && coins >= Mathf.Max(0, price);
 
             if (c.button != null) c.button.interactable = buyable;
         }
