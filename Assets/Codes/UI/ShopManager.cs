@@ -53,6 +53,7 @@ public class ShopManager : MonoBehaviour
         public Image bg;
         public Image icon;
         public Text nameText;
+        public Text descText;
         public Text priceText;
         public WeaponData weapon;
         public ItemData item;
@@ -418,9 +419,13 @@ public class ShopManager : MonoBehaviour
 
             int max = Mathf.Max(1, c.weapon.maxLevel);
 
-            string lvTag = cur >= max ? "MAX" : (cur == 0 ? "Lv1 (신규)" : $"Lv{cur + 1} (강화)");
+            string lvTag = cur >= max ? "MAX" : (cur == 0 ? "Lv1  신규" : $"Lv{cur + 1}  강화");
 
-            c.nameText.text = $"{nm}\n{lvTag}";
+            string kind = c.weapon.weaponType == WeaponType.RangedShoot ? "원거리" : "근접";
+
+            c.nameText.text = nm;
+
+            c.descText.text = $"{kind}\n{lvTag}\n데미지 {c.weapon.damage}";
 
             c.priceText.text = c.sold ? "판매완료" : $"{Mathf.Max(0, c.weapon.price)} G";
 
@@ -436,7 +441,9 @@ public class ShopManager : MonoBehaviour
 
             string label = string.IsNullOrEmpty(c.item.itemName) ? c.item.name : c.item.itemName;
 
-            c.nameText.text = $"[{RarityName(c.item.rarity)}]\n{label}\n\n{EffectSummary(c.item)}";
+            c.nameText.text = $"[{RarityName(c.item.rarity)}] {label}";
+
+            c.descText.text = EffectSummary(c.item);
 
             c.priceText.text = c.sold ? "판매완료" : $"{Mathf.Max(0, c.item.price)} G";
 
@@ -444,13 +451,15 @@ public class ShopManager : MonoBehaviour
         }
 
         // 빈 카드
-        if (c.bg != null) c.bg.color = RarityColor[0];
+        if (c.bg != null) c.bg.color = new Color(0.3f, 0.3f, 0.34f, 1f);
 
         SetIcon(c, null);
 
         bool poolsEmpty = (shopPool == null || shopPool.Count == 0) && (itemPool == null || itemPool.Count == 0);
 
         c.nameText.text = poolsEmpty ? "(풀 비었음)" : "-";
+
+        c.descText.text = "";
 
         c.priceText.text = "";
     }
@@ -580,29 +589,49 @@ public class ShopManager : MonoBehaviour
 
     private Card CreateCard(Transform parent, Font font, Vector2 pos, Vector2 size, int number)
     {
+        // 외곽 = 등급 테두리 겸 버튼 타겟.
         var img = CreateImage(parent, $"Card{number}", RarityColor[0]);
         Place(img.rectTransform, pos, size);
 
         var button = img.gameObject.AddComponent<Button>();
         button.targetGraphic = img;
 
-        // 무기/아이템 아이콘(상단). 스프라이트가 없으면 UpdateCardVisual 에서 숨김.
-        var iconImg = CreateImage(img.transform, "Icon", Color.white);
-        Place(iconImg.rectTransform, new Vector2(0f, size.y * 0.5f - 80f), new Vector2(120f, 120f));
+        // 내부 패널(어두운 배경). 테두리 5px 를 남겨 등급색이 프레임처럼 보이게.
+        var panel = CreateImage(img.transform, "Panel", new Color(0.12f, 0.12f, 0.15f, 1f));
+        Stretch(panel.rectTransform, 5f);
+        panel.raycastTarget = false;
+
+        // 아이콘 프레임(상단, 크게).
+        var frame = CreateImage(panel.transform, "IconFrame", new Color(0.18f, 0.18f, 0.22f, 1f));
+        Place(frame.rectTransform, new Vector2(0f, size.y * 0.5f - 95f), new Vector2(150f, 150f));
+        frame.raycastTarget = false;
+
+        var iconImg = CreateImage(frame.transform, "Icon", Color.white);
+        Place(iconImg.rectTransform, Vector2.zero, new Vector2(128f, 128f));
         iconImg.raycastTarget = false;
         iconImg.preserveAspect = true;
         iconImg.enabled = false;
 
-        // 이름/설명(멀티라인). 아이템은 [등급]\n이름\n\n효과 형태로 들어감.
-        var nameText = CreateText(img.transform, "Name", $"카드{number}", 26, font, TextAnchor.UpperCenter);
-        Place(nameText.rectTransform, new Vector2(0f, -30f), new Vector2(size.x - 16f, 200f));
-        nameText.color = Color.black;
+        // 이름(아이콘 아래).
+        var nameText = CreateText(panel.transform, "Name", $"카드{number}", 28, font, TextAnchor.MiddleCenter);
+        Place(nameText.rectTransform, new Vector2(0f, -6f), new Vector2(size.x - 24f, 56f));
+        nameText.color = Color.white;
 
-        var priceText = CreateText(img.transform, "Price", "", 30, font, TextAnchor.MiddleCenter);
-        Place(priceText.rectTransform, new Vector2(0f, -size.y * 0.5f + 40f), new Vector2(size.x - 20f, 60f));
-        priceText.color = new Color(0.12f, 0.28f, 0.12f);
+        // 설명(레벨/타입 또는 효과).
+        var descText = CreateText(panel.transform, "Desc", "", 22, font, TextAnchor.UpperCenter);
+        Place(descText.rectTransform, new Vector2(0f, -78f), new Vector2(size.x - 24f, 96f));
+        descText.color = new Color(0.80f, 0.82f, 0.88f, 1f);
 
-        var card = new Card { button = button, bg = img, icon = iconImg, nameText = nameText, priceText = priceText };
+        // 가격 판(하단).
+        var priceBg = CreateImage(panel.transform, "PriceBg", new Color(0.16f, 0.30f, 0.18f, 1f));
+        Place(priceBg.rectTransform, new Vector2(0f, -size.y * 0.5f + 38f), new Vector2(150f, 46f));
+        priceBg.raycastTarget = false;
+
+        var priceText = CreateText(priceBg.transform, "Price", "", 26, font, TextAnchor.MiddleCenter);
+        Stretch(priceText.rectTransform);
+        priceText.color = new Color(0.98f, 0.90f, 0.50f, 1f);
+
+        var card = new Card { button = button, bg = img, icon = iconImg, nameText = nameText, descText = descText, priceText = priceText };
 
         button.onClick.AddListener(() => Buy(card));
 
