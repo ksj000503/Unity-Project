@@ -37,12 +37,11 @@ public class Weapon : MonoBehaviour
         get
         {
             if (data == null) return 0;
-            float scaled = data.damage * (1f + 0.2f * (level - 1));
             float itemMult = (stats != null) ? stats.DamageMultiplier : 1f;
             float setMult = 1f;
             if (stats != null)
                 setMult = (data.weaponType == WeaponType.RangedShoot) ? stats.RangedSetMultiplier : stats.MeleeSetMultiplier;
-            return Mathf.RoundToInt(scaled * itemMult * setMult);
+            return WeaponMath.FinalDamage(data.damage, level, itemMult, setMult);
         }
     }
 
@@ -52,8 +51,7 @@ public class Weapon : MonoBehaviour
         get
         {
             if (data == null) return 0;
-            int bonus = (level - 1) / 3;
-            return Mathf.Max(0, data.pierceCount + bonus);
+            return WeaponMath.PierceCount(data.pierceCount, level);
         }
     }
 

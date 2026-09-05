@@ -106,8 +106,8 @@ public class PlayerStats : MonoBehaviour
         OnChanged?.Invoke();
     }
 
-    // 문턱 2/4/6 을 넘은 단계 수(0~3).
-    private static int SetTiers(int count)
+    // 문턱 2/4/6 을 넘은 단계 수(0~3). 자동 테스트에서 검증할 수 있도록 public static.
+    public static int SetTiers(int count)
     {
         if (count >= 6) return 3;
         if (count >= 4) return 2;
