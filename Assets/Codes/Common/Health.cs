@@ -12,6 +12,12 @@ public class Health : MonoBehaviour, IDamageable
     [Tooltip("사망 시 오브젝트 파괴 여부. 플레이어는 false(파괴 대신 OnDied만 발행 → 게임오버 처리).")]
     [SerializeField] private bool destroyOnDeath = true;
 
+    [Tooltip("디버그: 켜면 피해를 무시(무적). 디버그 콘솔에서 토글.")]
+    [SerializeField] private bool invincible = false;
+
+    // 디버그 콘솔이 토글. 무적이면 TakeDamage 가 피해를 무시한다.
+    public bool Invincible { get => invincible; set => invincible = value; }
+
     // 체력이 바뀔 때만 발행(current, max). HealthBar 등 UI가 구독. 값 변경 시에만 갱신 → 폴링 불필요.
     public event System.Action<int, int> OnHealthChanged;
 
@@ -68,6 +74,8 @@ public class Health : MonoBehaviour, IDamageable
             return;
         }
 
+        if (invincible) return; // 디버그 무적
+
         currentHp -= amount;
 
         OnHealthChanged?.Invoke(currentHp, maxHp);
@@ -76,6 +84,18 @@ public class Health : MonoBehaviour, IDamageable
         {
             Die();
         }
+    }
+
+    // 디버그 콘솔용 즉사(무적 무시). 게임오버 흐름 테스트에 사용.
+    public void Kill()
+    {
+        if (currentHp <= 0) return;
+
+        currentHp = 0;
+
+        OnHealthChanged?.Invoke(currentHp, maxHp);
+
+        Die();
     }
 
     void Die()

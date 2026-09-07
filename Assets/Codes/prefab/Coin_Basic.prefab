@@ -105,9 +105,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 95f5286f515e3904cb282d579fdd5ca3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Coin
-  attractRange: 2.5
-  collectRange: 0.4
-  moveSpeed: 8
+  attractRange: 4.5
+  collectRange: 0.8
+  moveSpeed: 12
 --- !u!95 &7900000000000000001
 Animator:
   serializedVersion: 5

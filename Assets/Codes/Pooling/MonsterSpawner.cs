@@ -71,6 +71,14 @@ public class MonsterSpawner : MonoBehaviour
     // Awake 에서 참조를 잡아야 StageManager.Start 의 BeginWave 호출 시점에 player 가 준비됨(실행 순서 안전).
     void Awake()
     {
+        // 씬에서 bossPrefab 이 비어 있으면 Resources/SpawnConfig 에서 자동 주입(씬 배선 불필요).
+        if (bossPrefab == null)
+        {
+            SpawnConfig cfg = Resources.Load<SpawnConfig>("SpawnConfig");
+
+            if (cfg != null && cfg.bossPrefab != null) bossPrefab = cfg.bossPrefab;
+        }
+
         if (!HasAnySpawnable())
         {
             Debug.LogWarning("[MonsterSpawner] 스폰 가능한 몬스터가 없습니다(monsterTable/monsterPrefab/bossPrefab 모두 비어있음).");

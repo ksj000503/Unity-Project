@@ -86,9 +86,10 @@ public class ShopManager : MonoBehaviour
     {
         if (catalog == null) catalog = Resources.Load<ShopCatalog>("ShopCatalog");
 
-        if (catalog == null) return;
+        if (catalog == null) return; // 카탈로그 없으면 인스펙터 풀 유지
 
-        if (shopPool == null) shopPool = new List<WeaponData>();
+        // 카탈로그를 정본으로 사용 → 인스펙터에 남은 임시/기본 무기(New Weapon·블래스터 등 아이콘 없는 것)는 제외.
+        shopPool = new List<WeaponData>();
 
         if (catalog.weapons != null)
         {
@@ -98,7 +99,7 @@ public class ShopManager : MonoBehaviour
             }
         }
 
-        if (itemPool == null) itemPool = new List<ItemData>();
+        itemPool = new List<ItemData>();
 
         if (catalog.items != null)
         {

@@ -129,4 +129,19 @@ public class StageManager : MonoBehaviour
     {
         currentStage = Mathf.Max(1, stage);
     }
+
+    // 디버그 콘솔용: 진행/인터미션 무관하게 지정 스테이지 웨이브를 새로 시작.
+    // 보스 주기에 걸리는 스테이지로 점프하면 그 즉시 보스가 등장한다.
+    public void DebugJumpToStage(int stage)
+    {
+        if (spawner == null) return;
+
+        Time.timeScale = 1f;
+
+        spawner.EndWave();               // 현재 몬스터 정리 + 스폰 중단
+
+        currentStage = Mathf.Max(1, stage);
+
+        StartWave();                     // 해당 스테이지로 재시작
+    }
 }

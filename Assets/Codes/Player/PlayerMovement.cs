@@ -13,6 +13,10 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField]
     private MapData mapData; // 카메라 없을 때 폴백용
 
+    [Tooltip("화면 경계 안쪽 여백(캐릭터 반지름). 캐릭터가 화면 밖으로 절반 잘리지 않게 함")]
+    [SerializeField]
+    private float edgePadding = 0.5f;
+
     private Camera cam;
 
     private void Awake()
@@ -51,8 +55,12 @@ public class PlayerMovement : MonoBehaviour
             float halfW = c.orthographicSize * c.aspect;
             Vector2 center = c.transform.position;
 
-            target.x = Mathf.Clamp(target.x, center.x - halfW, center.x + halfW);
-            target.y = Mathf.Clamp(target.y, center.y - halfH, center.y + halfH);
+            // 캐릭터 반지름(edgePadding)만큼 안쪽으로 제한 → 화면 밖으로 절반 잘리지 않음.
+            float padW = Mathf.Min(edgePadding, halfW);
+            float padH = Mathf.Min(edgePadding, halfH);
+
+            target.x = Mathf.Clamp(target.x, center.x - halfW + padW, center.x + halfW - padW);
+            target.y = Mathf.Clamp(target.y, center.y - halfH + padH, center.y + halfH - padH);
         }
         else if (mapData != null)
         {
