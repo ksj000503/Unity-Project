@@ -251,22 +251,10 @@ public class ShopManager : MonoBehaviour
 
         int luck = (playerStats != null) ? playerStats.Luck : 0;
 
-        float wN = HasRarity(ItemRarity.Normal) ? 70f : 0f;
-        float wE = HasRarity(ItemRarity.Epic) ? 25f + luck * 2f : 0f;
-        float wU = HasRarity(ItemRarity.Unique) ? 5f + luck : 0f;
+        float[] weights = ShopMath.RarityWeights(luck,
+            HasRarity(ItemRarity.Normal), HasRarity(ItemRarity.Epic), HasRarity(ItemRarity.Unique));
 
-        float total = wN + wE + wU;
-
-        ItemRarity chosen = ItemRarity.Normal;
-
-        if (total > 0f)
-        {
-            float r = Random.value * total;
-
-            if (r < wN) chosen = ItemRarity.Normal;
-            else if (r < wN + wE) chosen = ItemRarity.Epic;
-            else chosen = ItemRarity.Unique;
-        }
+        ItemRarity chosen = ShopMath.PickRarity(weights, Random.value);
 
         List<ItemData> pick = new List<ItemData>();
 
