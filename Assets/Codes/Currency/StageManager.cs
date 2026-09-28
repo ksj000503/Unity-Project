@@ -26,6 +26,11 @@ public class StageManager : MonoBehaviour
     private bool waveActive;
     private bool intermission;
 
+    // 플레이어 사망 후에는 웨이브를 더 진행하지 않는다.
+    // 같은 프레임에 사망(물리 단계)과 타이머 종료(Update)가 겹쳐도 상점이 열리지 않게 하기 위함.
+    private Health playerHealth;
+    private bool playerDead;
+
     public int CurrentStage => Mathf.Max(1, currentStage);
     public float TimeRemaining => Mathf.Max(0f, timer);
     public bool IsIntermission => intermission;
@@ -59,7 +64,39 @@ public class StageManager : MonoBehaviour
             return;
         }
 
+        SubscribePlayerDeath();
+
         if (autoStart) StartWave();
+    }
+
+    private void OnDestroy()
+    {
+        if (playerHealth != null) playerHealth.OnDied -= HandlePlayerDied;
+    }
+
+    private void SubscribePlayerDeath()
+    {
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+
+        if (player != null) playerHealth = player.GetComponent<Health>();
+
+        if (playerHealth != null)
+        {
+            playerHealth.OnDied += HandlePlayerDied;
+        }
+        else
+        {
+            Debug.LogWarning("[StageManager] 플레이어 Health 없음 — 사망 시 웨이브 중단이 동작하지 않음.", this);
+        }
+    }
+
+    private void HandlePlayerDied(Health _)
+    {
+        playerDead = true;
+
+        waveActive = false;
+
+        intermission = false;
     }
 
     private void StartWave()
@@ -134,7 +171,7 @@ public class StageManager : MonoBehaviour
     // 보스 주기에 걸리는 스테이지로 점프하면 그 즉시 보스가 등장한다.
     public void DebugJumpToStage(int stage)
     {
-        if (spawner == null) return;
+        if (spawner == null || playerDead) return;
 
         Time.timeScale = 1f;
 
@@ -143,5 +180,12 @@ public class StageManager : MonoBehaviour
         currentStage = Mathf.Max(1, stage);
 
         StartWave();                     // 해당 스테이지로 재시작
+    }
+
+    // 디버그 콘솔용: 타이머를 기다리지 않고 지금 웨이브를 끝낸다.
+    // 실제 시간 종료와 같은 ClearWave 경로를 타므로 가드(사망 후 무시 등)도 그대로 검증된다.
+    public void DebugEndWaveNow()
+    {
+        ClearWave();
     }
 }
