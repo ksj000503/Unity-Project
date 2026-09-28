@@ -141,6 +141,14 @@ public class DebugConsole : MonoBehaviour
         StageManager.Instance.DebugEndWaveNow();
     }
 
+    // 보스 라운드 검증용: 남은 시간을 3초로 줄여 시간 종료 분기(보스 생존 → 게임오버)를 바로 확인.
+    private void SkipToTimeUp()
+    {
+        if (StageManager.Instance == null) return;
+
+        StageManager.Instance.DebugSetTimeRemaining(3f);
+    }
+
     private void SetTimeScale(float s)
     {
         // 상점·게임오버가 timeScale=0 으로 일시정지한 상태면 배속 변경이 정지를 풀어버린다. 정지 중엔 무시.
@@ -219,6 +227,7 @@ public class DebugConsole : MonoBehaviour
         MakeButton("골드 +100", GiveGold);
         MakeButton("스테이지 +1", NextStage);
         MakeButton("보스 스테이지로 점프", JumpToBoss);
+        MakeButton("남은 시간 3초로", SkipToTimeUp);
         invincibleLabel = null;
         MakeToggleButton();
         MakeButton("즉사 (게임오버)", KillPlayer);

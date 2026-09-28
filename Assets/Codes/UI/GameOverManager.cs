@@ -19,7 +19,10 @@ public class GameOverManager : MonoBehaviour
     [SerializeField] private Font uiFont;
 
     private GameObject root;
+    private Text reasonText;
     private bool isGameOver;
+
+    private const string BossFailedReason = "보스를 처치하지 못했습니다";
 
     private void Awake()
     {
@@ -45,18 +48,40 @@ public class GameOverManager : MonoBehaviour
         {
             Debug.LogWarning("[GameOverManager] 플레이어 Health 없음 — 게임오버가 발동하지 않음. Player에 Health(destroyOnDeath=false) 추가 필요.", this);
         }
+
+        if (StageManager.Instance != null) StageManager.Instance.OnBossFailed += HandleBossFailed;
     }
 
     private void OnDestroy()
     {
         if (playerHealth != null) playerHealth.OnDied -= HandlePlayerDied;
+
+        if (StageManager.Instance != null) StageManager.Instance.OnBossFailed -= HandleBossFailed;
     }
 
     private void HandlePlayerDied(Health _)
     {
+        ShowGameOver("");
+    }
+
+    private void HandleBossFailed()
+    {
+        ShowGameOver(BossFailedReason);
+    }
+
+    // 게임오버 원인이 여럿이어도 먼저 온 한 번만 표시(isGameOver 가드). reason 이 비면 사유 줄 숨김.
+    private void ShowGameOver(string reason)
+    {
         if (isGameOver) return;
 
         isGameOver = true;
+
+        if (reasonText != null)
+        {
+            reasonText.text = reason;
+
+            reasonText.gameObject.SetActive(!string.IsNullOrEmpty(reason));
+        }
 
         SetVisible(true);
 
@@ -116,6 +141,12 @@ public class GameOverManager : MonoBehaviour
         var title = CreateText(root.transform, "Title", "게임 오버", 90, font, TextAnchor.MiddleCenter);
         Place(title.rectTransform, new Vector2(0f, 90f), new Vector2(800f, 140f));
         title.color = new Color(0.95f, 0.3f, 0.3f);
+
+        // 사유 한 줄(제목과 버튼 사이). 사유 없는 게임오버(플레이어 사망)면 숨김.
+        reasonText = CreateText(root.transform, "Reason", "", 40, font, TextAnchor.MiddleCenter);
+        Place(reasonText.rectTransform, new Vector2(0f, 10f), new Vector2(900f, 60f));
+        reasonText.color = new Color(1f, 0.85f, 0.4f);
+        reasonText.gameObject.SetActive(false);
 
         Button restart = CreateButton(root.transform, font, "다시 시작", new Vector2(-160f, -90f), new Vector2(280f, 90f), new Color(0.2f, 0.45f, 0.85f, 1f));
         restart.onClick.AddListener(Restart);

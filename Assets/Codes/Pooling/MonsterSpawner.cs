@@ -54,6 +54,14 @@ public class MonsterSpawner : MonoBehaviour
     // 활성 몬스터가 모두 죽었을 때(전멸) 발행. StageManager 가 구독해 웨이브 조기 클리어.
     public event System.Action OnAllMonstersCleared;
 
+    // 이번 웨이브의 보스가 처치됐을 때 발행. StageManager 가 구독해 즉시 클리어.
+    public event System.Action OnBossDefeated;
+
+    // 이번 웨이브에 스폰된 보스(처치·디스폰 시 null). 스폰 실패 시에도 null → 보스 없는 웨이브로 취급.
+    private Health bossHealth;
+
+    public bool BossAlive => bossHealth != null;
+
     private Transform player;
     private Camera cam;
 
@@ -123,15 +131,17 @@ public class MonsterSpawner : MonoBehaviour
 
         spawning = true;
 
-        // 보스 등장 조건: bossPrefab 존재 + 주기 일치.
-        if (bossPrefab != null && bossEveryStages > 0 && currentStage % bossEveryStages == 0)
-        {
-            SpawnOne(bossPrefab);
-        }
+        bossHealth = IsBossStage(currentStage) ? SpawnOne(bossPrefab) : null;
 
         if (spawnRoutine != null) StopCoroutine(spawnRoutine);
 
         spawnRoutine = StartCoroutine(SpawnRoutine());
+    }
+
+    // 보스 등장 조건: bossPrefab 존재 + 주기 일치. StageManager 가 보너스 시간 계산에도 사용.
+    public bool IsBossStage(int stage)
+    {
+        return bossPrefab != null && bossEveryStages > 0 && stage % bossEveryStages == 0;
     }
 
     // 웨이브 종료: 스폰 중단 + 남은 몬스터 디스폰(풀 복귀, 사망 처리 아님 → 코인 드랍 없음).
@@ -182,20 +192,21 @@ public class MonsterSpawner : MonoBehaviour
     }
 
     // 실제 스폰 1마리. prefab 별 기준 HP 를 스테이지 스케일로 덮어씀. 소스 프리팹 추적.
-    private void SpawnOne(GameObject prefab)
+    // 스폰된 몬스터의 Health 반환(실패하거나 Health 가 없으면 null).
+    private Health SpawnOne(GameObject prefab)
     {
-        if (prefab == null) return;
+        if (prefab == null) return null;
 
         if (!TryGetSpawnPosition(out Vector2 spawnPos))
         {
             Debug.LogWarning("[MonsterSpawner] 스폰 위치를 찾지 못했습니다.");
 
-            return;
+            return null;
         }
 
         GameObject monster = ObjectPoolManager.Instance.Get(prefab);
 
-        if (monster == null) return;
+        if (monster == null) return null;
 
         monster.transform.position = spawnPos;
 
@@ -218,6 +229,8 @@ public class MonsterSpawner : MonoBehaviour
         }
 
         hasSpawnedThisWave = true;
+
+        return health;
     }
 
     // monsterTable 에서 (스테이지 조건 통과분) 가중치 추첨. 비면 monsterPrefab 폴백.
@@ -278,6 +291,16 @@ public class MonsterSpawner : MonoBehaviour
 
         h.OnDied -= HandleMonsterDied;
 
+        // 보스 처치 → 즉시 클리어 신호. active 에서 먼저 빠졌으므로 이어지는 EndWave 디스폰과 겹치지 않음.
+        if (h == bossHealth)
+        {
+            bossHealth = null;
+
+            OnBossDefeated?.Invoke();
+
+            return;
+        }
+
         // 스폰이 한 번이라도 있었고 전부 죽었으면 전멸 → 웨이브 조기 클리어.
         if (spawning && hasSpawnedThisWave && active.Count == 0)
         {
@@ -304,6 +327,8 @@ public class MonsterSpawner : MonoBehaviour
         active.Clear();
 
         sourceOf.Clear();
+
+        bossHealth = null;
     }
 
     private bool HasAnySpawnable()

@@ -14,6 +14,9 @@ public class Coin : MonoBehaviour
     [Tooltip("끌려가는 속도(월드 유닛/초)")]
     [SerializeField] private float moveSpeed = 8f;
 
+    [Tooltip("보스 처치 후 회수 구간에서 화면 전체 코인이 끌려오는 속도(월드 유닛/초)")]
+    [SerializeField] private float vacuumSpeed = 25f;
+
     private int value = 1;
     private GameObject sourcePrefab;
 
@@ -72,12 +75,17 @@ public class Coin : MonoBehaviour
             return;
         }
 
-        if (sqr <= attractRange * attractRange)
+        // 보스 처치 후 회수 구간이면 거리와 무관하게 빠르게 끌려옴(라운드 종료 전에 보상 획득).
+        bool vacuum = StageManager.Instance != null && StageManager.Instance.IsCollectingLoot;
+
+        if (vacuum || sqr <= attractRange * attractRange)
         {
+            float speed = vacuum ? Mathf.Max(moveSpeed, vacuumSpeed) : moveSpeed;
+
             transform.position = Vector2.MoveTowards(
                 transform.position,
                 playerTf.position,
-                moveSpeed * Time.fixedDeltaTime);
+                speed * Time.fixedDeltaTime);
         }
     }
 

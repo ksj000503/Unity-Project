@@ -2,7 +2,9 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 // 웨이브/스테이지 진행 주체(싱글톤). 스폰을 직접 하지 않고 MonsterSpawner 를 제어한다.
-// 웨이브 = 고정 시간(waveDuration) 경과 시에만 클리어 → 인터미션(상점) → StartNextWave 로 다음 스테이지.
+// 웨이브 = 고정 시간(waveDuration) 경과 시 클리어 → 인터미션(상점) → StartNextWave 로 다음 스테이지.
+// 보스 스테이지: 시간 +bossBonusTime, 보스 처치 시 남은 시간을 bossClearCountdown 으로 줄여 코인 회수 후 클리어,
+// 시간 종료 시 보스 생존이면 게임오버(OnBossFailed).
 // 스테이지 번호는 코인 가치·스폰 난이도 스케일의 기준(CurrentStage).
 public class StageManager : MonoBehaviour
 {
@@ -13,6 +15,12 @@ public class StageManager : MonoBehaviour
     [Header("웨이브")]
     [Tooltip("웨이브 지속 시간(초, 고정)")]
     [SerializeField] private float waveDuration = 20f;
+
+    [Tooltip("보스 스테이지에 추가로 주는 시간(초)")]
+    [SerializeField] private float bossBonusTime = 10f;
+
+    [Tooltip("보스 처치 후 남은 시간을 이 값으로 줄여 카운트다운(3→2→1) 후 클리어. 그동안 코인 회수.")]
+    [SerializeField] private float bossClearCountdown = 3f;
 
     [Tooltip("시작 시 자동으로 1스테이지 웨이브 개시")]
     [SerializeField] private bool autoStart = true;
@@ -26,10 +34,15 @@ public class StageManager : MonoBehaviour
     private bool waveActive;
     private bool intermission;
 
-    // 플레이어 사망 후에는 웨이브를 더 진행하지 않는다.
+    // 게임이 끝난 뒤(플레이어 사망 또는 보스 실패)에는 웨이브를 더 진행하지 않는다.
     // 같은 프레임에 사망(물리 단계)과 타이머 종료(Update)가 겹쳐도 상점이 열리지 않게 하기 위함.
     private Health playerHealth;
-    private bool playerDead;
+    private bool gameEnded;
+
+    // 보스 처치 후 코인 회수 구간(카운트다운 중). 코인은 거리와 무관하게 플레이어에게 끌려온다.
+    private bool lootCollecting;
+
+    public bool IsCollectingLoot => lootCollecting;
 
     public int CurrentStage => Mathf.Max(1, currentStage);
     public float TimeRemaining => Mathf.Max(0f, timer);
@@ -38,6 +51,7 @@ public class StageManager : MonoBehaviour
     public event System.Action<int> OnStageChanged;   // 새 스테이지 번호(웨이브 시작 시)
     public event System.Action<int> OnWaveCleared;    // 클리어된 스테이지 번호 → 상점 열기 신호
     public event System.Action<float> OnTimeChanged;  // 남은 시간(초)
+    public event System.Action OnBossFailed;          // 보스를 시간 안에 못 잡음 → 게임오버 신호
 
     private void Awake()
     {
@@ -66,12 +80,16 @@ public class StageManager : MonoBehaviour
 
         SubscribePlayerDeath();
 
+        spawner.OnBossDefeated += HandleBossDefeated;
+
         if (autoStart) StartWave();
     }
 
     private void OnDestroy()
     {
         if (playerHealth != null) playerHealth.OnDied -= HandlePlayerDied;
+
+        if (spawner != null) spawner.OnBossDefeated -= HandleBossDefeated;
     }
 
     private void SubscribePlayerDeath()
@@ -92,11 +110,33 @@ public class StageManager : MonoBehaviour
 
     private void HandlePlayerDied(Health _)
     {
-        playerDead = true;
+        EndGame();
+    }
+
+    // 보스를 시간 안에 처치 → 스폰 중단·잔몹 정리 + 남은 시간을 카운트다운 값으로 줄임.
+    // 이후는 평소 타이머 흐름 그대로: HUD 에 3→2→1 표시, 0 이 되면 보스가 없으므로 ClearWave(상점 → 다음 라운드).
+    private void HandleBossDefeated()
+    {
+        if (!waveActive || lootCollecting) return;
+
+        lootCollecting = true;
+
+        timer = Mathf.Min(timer, Mathf.Max(0f, bossClearCountdown)); // 이미 3초 미만이면 그대로 둠
+
+        OnTimeChanged?.Invoke(TimeRemaining);
+
+        spawner.EndWave();
+    }
+
+    private void EndGame()
+    {
+        gameEnded = true;
 
         waveActive = false;
 
         intermission = false;
+
+        lootCollecting = false;
     }
 
     private void StartWave()
@@ -105,7 +145,11 @@ public class StageManager : MonoBehaviour
 
         intermission = false;
 
+        lootCollecting = false;
+
         timer = Mathf.Max(1f, waveDuration);
+
+        if (spawner.IsBossStage(CurrentStage)) timer += Mathf.Max(0f, bossBonusTime);
 
         OnStageChanged?.Invoke(CurrentStage);
 
@@ -122,7 +166,7 @@ public class StageManager : MonoBehaviour
 
             OnTimeChanged?.Invoke(TimeRemaining);
 
-            if (timer <= 0f) ClearWave();
+            if (timer <= 0f) HandleTimeUp();
 
             return;
         }
@@ -136,6 +180,21 @@ public class StageManager : MonoBehaviour
         }
     }
 
+    // 시간 종료: 보스가 살아 있으면 실패(게임오버), 아니면 평소처럼 클리어.
+    private void HandleTimeUp()
+    {
+        if (spawner.BossAlive)
+        {
+            EndGame();
+
+            OnBossFailed?.Invoke();
+
+            return;
+        }
+
+        ClearWave();
+    }
+
     private void ClearWave()
     {
         if (!waveActive) return;
@@ -143,6 +202,8 @@ public class StageManager : MonoBehaviour
         waveActive = false;
 
         intermission = true;
+
+        lootCollecting = false;
 
         spawner.EndWave();
 
@@ -171,7 +232,7 @@ public class StageManager : MonoBehaviour
     // 보스 주기에 걸리는 스테이지로 점프하면 그 즉시 보스가 등장한다.
     public void DebugJumpToStage(int stage)
     {
-        if (spawner == null || playerDead) return;
+        if (spawner == null || gameEnded) return;
 
         Time.timeScale = 1f;
 
@@ -187,5 +248,15 @@ public class StageManager : MonoBehaviour
     public void DebugEndWaveNow()
     {
         ClearWave();
+    }
+
+    // 디버그 콘솔용: 남은 시간을 줄여 시간 종료 판정(보스 성공/실패 분기)을 빨리 확인.
+    public void DebugSetTimeRemaining(float seconds)
+    {
+        if (!waveActive) return;
+
+        timer = Mathf.Min(timer, Mathf.Max(0f, seconds));
+
+        OnTimeChanged?.Invoke(TimeRemaining);
     }
 }
