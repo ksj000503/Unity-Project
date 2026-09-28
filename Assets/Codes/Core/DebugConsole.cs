@@ -128,8 +128,30 @@ public class DebugConsole : MonoBehaviour
         if (playerHealth != null) playerHealth.Kill();
     }
 
+    // SCRUM-6 재현용: 같은 프레임에 사망 → 웨이브 종료 순서로 일으킨다.
+    // 실제 게임도 물리 단계(피격 사망)가 Update(타이머 종료)보다 먼저 돌기 때문에 같은 순서로 호출한다.
+    private void KillAtWaveEnd()
+    {
+        Resolve();
+
+        if (playerHealth == null || StageManager.Instance == null) return;
+
+        playerHealth.Kill();
+
+        StageManager.Instance.DebugEndWaveNow();
+    }
+
     private void SetTimeScale(float s)
     {
+        // 상점·게임오버가 timeScale=0 으로 일시정지한 상태면 배속 변경이 정지를 풀어버린다. 정지 중엔 무시.
+        // (배속 버튼 값은 0.5 이상이라 0 은 항상 다른 시스템의 일시정지를 뜻한다.)
+        if (Time.timeScale == 0f)
+        {
+            RefreshLabels();
+
+            return;
+        }
+
         Time.timeScale = s;
 
         RefreshLabels();
@@ -200,6 +222,7 @@ public class DebugConsole : MonoBehaviour
         invincibleLabel = null;
         MakeToggleButton();
         MakeButton("즉사 (게임오버)", KillPlayer);
+        MakeButton("웨이브 종료 + 즉사 동시", KillAtWaveEnd);
 
         MakeText("배속", 18, new Color(0.8f, 0.85f, 0.95f));
         MakeSpeedRow();
