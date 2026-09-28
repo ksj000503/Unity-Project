@@ -3,7 +3,7 @@ using UnityEngine.InputSystem;
 
 // 웨이브/스테이지 진행 주체(싱글톤). 스폰을 직접 하지 않고 MonsterSpawner 를 제어한다.
 // 웨이브 = 고정 시간(waveDuration) 경과 시 클리어 → 인터미션(상점) → StartNextWave 로 다음 스테이지.
-// 보스 스테이지: 시간 +bossBonusTime, 보스 처치 시 남은 시간을 bossClearCountdown 으로 줄여 코인 회수 후 클리어,
+// 보스 스테이지: 시간 +bossBonusTime, 보스 처치 시 남은 시간을 bossClearCountdown 으로 맞춰 코인 회수 후 클리어,
 // 시간 종료 시 보스 생존이면 게임오버(OnBossFailed).
 // 스테이지 번호는 코인 가치·스폰 난이도 스케일의 기준(CurrentStage).
 public class StageManager : MonoBehaviour
@@ -19,7 +19,7 @@ public class StageManager : MonoBehaviour
     [Tooltip("보스 스테이지에 추가로 주는 시간(초)")]
     [SerializeField] private float bossBonusTime = 10f;
 
-    [Tooltip("보스 처치 후 남은 시간을 이 값으로 줄여 카운트다운(3→2→1) 후 클리어. 그동안 코인 회수.")]
+    [Tooltip("보스 처치 시 남은 시간을 이 값으로 맞춰 카운트다운(3→2→1) 후 클리어. 그동안 코인 회수.")]
     [SerializeField] private float bossClearCountdown = 3f;
 
     [Tooltip("시작 시 자동으로 1스테이지 웨이브 개시")]
@@ -113,7 +113,8 @@ public class StageManager : MonoBehaviour
         EndGame();
     }
 
-    // 보스를 시간 안에 처치 → 스폰 중단·잔몹 정리 + 남은 시간을 카운트다운 값으로 줄임.
+    // 보스를 시간 안에 처치 → 스폰 중단·잔몹 정리 + 남은 시간을 카운트다운 값으로 맞춤.
+    // 남은 시간이 더 적어도 카운트다운 값으로 늘려 코인 회수 시간을 항상 보장한다.
     // 이후는 평소 타이머 흐름 그대로: HUD 에 3→2→1 표시, 0 이 되면 보스가 없으므로 ClearWave(상점 → 다음 라운드).
     private void HandleBossDefeated()
     {
@@ -121,7 +122,7 @@ public class StageManager : MonoBehaviour
 
         lootCollecting = true;
 
-        timer = Mathf.Min(timer, Mathf.Max(0f, bossClearCountdown)); // 이미 3초 미만이면 그대로 둠
+        timer = Mathf.Max(0f, bossClearCountdown);
 
         OnTimeChanged?.Invoke(TimeRemaining);
 
